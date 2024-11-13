@@ -1,0 +1,1 @@
+export const USER_TABLE = process.env.USERS_TABLE
