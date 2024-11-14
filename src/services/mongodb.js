@@ -85,3 +85,16 @@ export const aggregateFromDb = async (collectionName = "", query = []) => {
     throw error;
   }
 };
+
+export const insertManyToDb = async (collectionName = "", data = []) => {
+  try {
+    if (!connection) {
+      await getMongodbClient();
+    }
+    const collection = await connection.db.collection(collectionName);
+    const result = await collection.insertMany(data);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};

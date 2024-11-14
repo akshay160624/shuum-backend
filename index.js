@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 8000;
 
 // routes
 import userAuth from "./src/routes/auth.routes.js";
+import company from "./src/routes/company.routes.js";
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -32,3 +33,5 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", userAuth);
+app.use("/api/company", company);
+

@@ -38,13 +38,13 @@
 					"response": []
 				},
 				{
-					"name": "Verify-otp",
+					"name": "Verify Otp",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\",\r\n    \"otp\": 358790\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -64,8 +64,206 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Login Otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/get-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"get-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update UserInfo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Akshay\",\r\n    \"role\": \"ADMIN\",\r\n    \"linkedin\": \"https://www.google.com/search\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/update",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"update"
+							]
+						}
+					},
+					"response": []
 				}
 			]
+		},
+		{
+			"name": "Company",
+			"item": [
+				{
+					"name": "Add",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/C:/Users/Admin/Downloads/6RbGfCK3Pr0CWieWNaXbxSDAqbT7Yt6wjCSnf2cE5JiR43NnA.jpg"
+								},
+								{
+									"key": "company_name",
+									"value": "Mars",
+									"type": "text"
+								},
+								{
+									"key": "industry",
+									"value": "IT",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company/add",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/company/list?search_text=Ma",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"list"
+							],
+							"query": [
+								{
+									"key": "search_text",
+									"value": "Ma"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Company Member",
+			"item": [
+				{
+					"name": "Add",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company-member",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company-member/add",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company-member",
+								"add"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiOTk0NGUyZmMtZTkyYi00ZDc5LWI3MWYtODg0YjBkYTAyOTk5IiwiZW1haWwiOiJha3NoYXkubWFpbGluYXRvckBtYWlsaW5hdG9yLmNvbSJ9LCJpYXQiOjE3MzE1ODI4ODksImV4cCI6MTczMTY2OTI4OX0.XxFHW-oT9XmwpHwbzWbSawGcb8Hd7yvgW765_gvXNyI",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
