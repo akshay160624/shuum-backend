@@ -5,7 +5,7 @@ import { aggregateFromDb, fetchOneFromDb, insertManyToDb } from "../services/mon
 import { companyInsertRequestValidate } from "../services/validations/company.validations.js";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
-import { ACTIVE } from "../services/helpers/constants.js";
+import { ACTIVE, UNCLAIMED } from "../services/helpers/constants.js";
 const { isEmpty } = lodash;
 
 export const addCompany = async (req, res) => {
