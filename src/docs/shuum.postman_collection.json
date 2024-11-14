@@ -198,40 +198,6 @@
 					"response": []
 				}
 			]
-		},
-		{
-			"name": "Company Member",
-			"item": [
-				{
-					"name": "Add",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "foldername",
-								"value": "company-member",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": []
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/company-member/add",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"company-member",
-								"add"
-							]
-						}
-					},
-					"response": []
-				}
-			]
 		}
 	],
 	"auth": {
@@ -239,7 +205,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiOTk0NGUyZmMtZTkyYi00ZDc5LWI3MWYtODg0YjBkYTAyOTk5IiwiZW1haWwiOiJha3NoYXkubWFpbGluYXRvckBtYWlsaW5hdG9yLmNvbSJ9LCJpYXQiOjE3MzE1ODI4ODksImV4cCI6MTczMTY2OTI4OX0.XxFHW-oT9XmwpHwbzWbSawGcb8Hd7yvgW765_gvXNyI",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiOGY0YTc5OGItYTA2MS00ZmE4LTkzNTktYjlmMzRlMjUyZTNiIiwiZW1haWwiOiJha3NoYXkubWFpbGluYXRvckBtYWlsaW5hdG9yLmNvbSJ9LCJpYXQiOjE3MzE1OTQwMzUsImV4cCI6MTczMTY4MDQzNX0.CAQNYgTr-B76meUpEYJuKi2iK0SDXwWRVVa_AnR8t2g",
 				"type": "string"
 			}
 		]
