@@ -5,6 +5,8 @@ import "./src/connection/server.js";
 import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+const PORT = process.env.PORT || 8000;
+
 // routes
 import userAuth from "./src/routes/auth.routes.js";
 
@@ -21,8 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(`${__dirname}/public`));
 
-app.listen(process.env.PORT, () => {
-  console.log(`--Server is running on port ${process.env.PORT}--`);
+app.listen(PORT, () => {
+  console.log(`--Server is running on port ${PORT}--`);
 });
 
 app.get("/", (req, res) => {

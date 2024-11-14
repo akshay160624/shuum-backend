@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+import jwt from "jsonwebtoken";
 
 const service = process.env.EMAIL_SERVICE;
 const fromEmail = process.env.EMAIL_FROM;
@@ -39,10 +40,10 @@ export function generateOtpWithExpiry() {
   return { otp, otpExpires };
 }
 
-export async function validateOTP(request, user) {
+export async function validateOTP(otp, user) {
   try {
-    if ((process.env.ENVIRONMENT_NAME == "DEV" && request.otp !== 12345) || process.env.ENVIRONMENT_NAME == "PROD") {
-      if (user && user.otp === request.otp) {
+    if ((process.env.ENVIRONMENT_NAME == "DEV" && otp !== 12345) || process.env.ENVIRONMENT_NAME == "PROD") {
+      if (user && user.otp === otp) {
         if (user.otp_expiry < new Date()) {
           throw Error(`OTP expired!`);
         }
@@ -50,6 +51,23 @@ export async function validateOTP(request, user) {
         throw Error(`Invalid OTP!`);
       }
     }
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function createJwtToken(user) {
+  try {
+    //token object to create token
+    let tokenObject = {
+      user_id: user.user_id,
+      email: user.email,
+    };
+
+    const token = jwt.sign({ tokenObject }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+    return token;
   } catch (err) {
     throw err;
   }
