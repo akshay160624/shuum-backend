@@ -59,13 +59,15 @@ export const companyList = async (req, res) => {
   try {
     const { search_text: searchText = "" } = req.query;
 
-    let query = [
-      {
-        $match: {
-          status: ACTIVE,
-        },
-      },
-    ];
+    let query = [];
+
+    // let query = [
+    //   {
+    //     $match: {
+    //       status: ACTIVE, // TODO: Check multiple status if required
+    //     },
+    //   },
+    // ];
 
     if (searchText) {
       const searchQuery = {
