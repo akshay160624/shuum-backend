@@ -9,19 +9,19 @@ const { isEmpty } = lodash;
 
 export const verifyUserAuthToken = async (req, res, next) => {
   if (!req.header("Authorization")) {
-    return responseHelper.error(res, NOT_FOUND, TOKEN_NOTFOUND);
+    return responseHelper.error(res, TOKEN_NOTFOUND, NOT_FOUND);
   } else {
     try {
       const token = req.header("Authorization").replace("Bearer ", "");
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (!decoded) {
-        return responseHelper.error(res, NOT_FOUND, TOKEN_NOTFOUND);
+        return responseHelper.error(res, TOKEN_NOTFOUND, NOT_FOUND);
       } else {
         const userInDb = await fetchOneFromDb(USER_TABLE, {
           user_id: decoded.tokenObject.user_id,
         });
         if (isEmpty(userInDb)) {
-          return responseHelper.error(res, NOT_FOUND, USER_NOTFOUND);
+          return responseHelper.error(res, USER_NOTFOUND, NOT_FOUND);
         } else {
           req.user = userInDb;
           req.token = token;
@@ -29,7 +29,7 @@ export const verifyUserAuthToken = async (req, res, next) => {
         }
       }
     } catch (e) {
-      return responseHelper.error(res, NOT_FOUND, e.message);
+      return responseHelper.error(res, e.message, NOT_FOUND);
     }
   }
 };

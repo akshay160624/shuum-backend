@@ -29,7 +29,7 @@ export const addCompanyMember = async (req, res) => {
 
     // check company exist in db
     const isCompanyExist = await fetchCompany(companyFilter);
-    if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company does not exists!`, BAD_REQUEST);
+    if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
 
     const { location, originalname } = req.file;
 
