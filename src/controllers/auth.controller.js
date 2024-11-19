@@ -1,6 +1,6 @@
 import { getOtpRequestValidate, registerUserRequestValidate, verifyOtpRequestValidate, verifyUpdateUserInfoRequestValidate } from "../services/validations/auth.validations.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { BAD_REQUEST, ERROR, SUCCESS } from "../services/helpers/status-code.js";
+import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { USER_TABLE } from "../services/helpers/db-tables.js";
 import { ACTIVE, INACTIVE } from "../services/helpers/constants.js";
 import { fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
@@ -86,7 +86,7 @@ export const verifyOtp = async (req, res) => {
 
     // validate user
     const userExist = await fetchOneFromDb(USER_TABLE, userFilter);
-    if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, BAD_REQUEST);
+    if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, NOT_FOUND);
 
     await validateOTP(otp, userExist);
 
@@ -128,7 +128,7 @@ export const getOtp = async (req, res) => {
 
     // check user exist in db
     const userExist = await fetchOneFromDb(USER_TABLE, userFilter);
-    if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, BAD_REQUEST);
+    if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, NOT_FOUND);
 
     // generate random 6 digit otp
     const { otp, otpExpires } = generateOtpWithExpiry();

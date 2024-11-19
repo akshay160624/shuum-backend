@@ -219,7 +219,8 @@ export const companyList = async (req, res) => {
           company_image: 1,
           status: 1,
           members_count: 1,
-          members_images: { $slice: ["$members_images", 3] }, // Limit the members_images array to 3 images only
+          members_images: 1, // Limit the members_images array to 3 images only
+          // members_images: { $slice: ["$members_images", 3] }, // Limit the members_images array to 3 images only
         },
       },
     ];

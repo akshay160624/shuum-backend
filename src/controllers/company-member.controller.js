@@ -52,7 +52,10 @@ export const addCompanyMember = async (req, res) => {
     // insert into the database
     const companyMemberSaved = await insertOneToDb(COMPANY_MEMBER_TABLE, companyMemberData);
     if (!isEmpty(companyMemberSaved)) {
-      return responseHelper.success(res, "Company member saved successfully", SUCCESS);
+      const responseData = {
+        company_member_id: companyMemberData?.company_member_id,
+      };
+      return responseHelper.success(res, "Company member saved successfully", SUCCESS, responseData);
     } else {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }
@@ -73,7 +76,7 @@ export const updateCompanyMember = async (req, res) => {
       company_member_id: companyMemberId,
     };
     const isCompanyExist = await fetchCompanyMember(companyMemberFilter);
-    if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company member does not exists!`, BAD_REQUEST);
+    if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company member does not exists!`, NOT_FOUND);
 
     const updateData = {
       socials: socials,
