@@ -9,7 +9,7 @@ const { isEmpty } = lodash;
 
 export const verifyUserAuthToken = async (req, res, next) => {
   if (!req.header("Authorization")) {
-    res.status(NOT_FOUND).json({ status: false, code: NOT_FOUND, message: TOKEN_NOTFOUND });
+    return responseHelper.error(res, NOT_FOUND, TOKEN_NOTFOUND);
   } else {
     try {
       const token = req.header("Authorization").replace("Bearer ", "");
