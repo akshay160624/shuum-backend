@@ -165,7 +165,8 @@ export const updateUserInfo = async (req, res) => {
     const isNotValid = await verifyUpdateUserInfoRequestValidate(req.body);
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
-    const { name, role, linkedin, user } = req.body;
+    const { user } = req;
+    const { name, role, linkedin } = req.body;
 
     const userUpdateData = {
       name: name.trim(),

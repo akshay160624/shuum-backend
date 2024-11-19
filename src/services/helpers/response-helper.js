@@ -9,12 +9,12 @@ export const success = async (res, message, statusCode = 200, data = null, extra
     response.data = data;
   }
 
-  return res.json(response);
+  return res.status(statusCode).json(response);
 };
 
 // send error response
 export const error = async (res, message, statusCode = 500) => {
-  return res.json({
+  return res.status(statusCode).json({
     status: false,
     code: statusCode,
     message: message || "Internal server error",

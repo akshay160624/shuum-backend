@@ -9,7 +9,7 @@ const { isEmpty } = lodash;
 
 export const verifyUserAuthToken = async (req, res, next) => {
   if (!req.header("Authorization")) {
-    res.json({ status: false, code: NOT_FOUND, message: TOKEN_NOTFOUND });
+    res.status(NOT_FOUND).json({ status: false, code: NOT_FOUND, message: TOKEN_NOTFOUND });
   } else {
     try {
       const token = req.header("Authorization").replace("Bearer ", "");
@@ -23,9 +23,9 @@ export const verifyUserAuthToken = async (req, res, next) => {
         if (isEmpty(userInDb)) {
           return responseHelper.error(res, NOT_FOUND, USER_NOTFOUND);
         } else {
-          req.body.user = userInDb;
-          req.body.token = token;
-          await next();
+          req.user = userInDb;
+          req.token = token;
+          next();
         }
       }
     } catch (e) {

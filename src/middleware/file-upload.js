@@ -13,21 +13,21 @@ const s3 = new S3Client({
   },
 });
 
-const imageFilter = (req, file, cb) => {
-  if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/i)) {
-    return cb(new Error("Please upload a valid image!"), false);
+const excelFileFilter = (req, file, cb) => {
+  if (!file.originalname.match(/\.(csv|CSV)$/i)) {
+    return cb(new Error("Please upload a valid file!"), false);
   }
   cb(undefined, true);
 };
 
-export const uploadS3Image = multer({
-  fileFilter: imageFilter,
+export const uploadS3File = multer({
+  fileFilter: excelFileFilter,
   storage: multerS3({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
     destination: (req, file, cb) => {
-      const folderpath = req.headers.foldername ? req.headers.foldername + "/" : "";
-      cb(null, folderpath);
+      const folderPath = req.headers.foldername ? req.headers.foldername + "/" : "";
+      cb(null, folderPath);
     },
     contentType: multerS3.AUTO_CONTENT_TYPE,
     metadata: function (req, file, cb) {
@@ -76,3 +76,16 @@ export const deleteFileFromS3 = (key, foldername, next) => {
     next(error, data);
   });
 };
+
+// // Setup Multer for File Uploads
+// export const uploadFile = multer({
+//   fileFilter: excelFileFilter,
+//   storage: multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       cb(null, documentPath);
+//     },
+//     filename: function (req, file, cb) {
+//       cb(null, Date.now() + "-" + file.originalname);
+//     },
+//   }),
+// });
