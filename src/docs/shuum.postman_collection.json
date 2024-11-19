@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\"\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay1.mailinator@mailinator.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -44,7 +44,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\",\r\n    \"otp\": 358790\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay1.mailinator@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -100,7 +100,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Akshay\",\r\n    \"role\": \"ADMIN\",\r\n    \"linkedin\": \"https://www.google.com/search\"\r\n}",
+							"raw": "{\r\n    \"name\": \"Akshay Mistry\",\r\n    \"role\": \"SUPER ADMIN\",\r\n    \"linkedin\": \"https://www.google.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -143,18 +143,17 @@
 								{
 									"key": "image",
 									"type": "file",
-									"src": "/C:/Users/Admin/Downloads/6RbGfCK3Pr0CWieWNaXbxSDAqbT7Yt6wjCSnf2cE5JiR43NnA.jpg"
+									"src": "/C:/Users/Admin/Downloads/Ecommerce-templates/placeholder.png"
 								},
 								{
 									"key": "company_name",
-									"value": "Mars",
+									"value": "Zoho",
 									"type": "text"
 								},
 								{
 									"key": "industry",
 									"value": "IT",
-									"type": "text",
-									"disabled": true
+									"type": "text"
 								}
 							]
 						},
@@ -173,12 +172,47 @@
 					"response": []
 				},
 				{
+					"name": "Insert Excel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company-excel",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/Admin/Downloads/company-data.csv"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company/insert",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"insert"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "List",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/company/list?search_text=Ma",
+							"raw": "{{baseUrl}}/api/company/list?search_text=",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -190,8 +224,102 @@
 							"query": [
 								{
 									"key": "search_text",
-									"value": "Ma"
+									"value": ""
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Company Member",
+			"item": [
+				{
+					"name": "Add",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company-member",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "company_id",
+									"value": "2d8f0957-fa4f-4d30-bf9d-375ade8dc39b",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "ADMIN",
+									"type": "text"
+								},
+								{
+									"key": "about_me",
+									"value": "about",
+									"type": "text"
+								},
+								{
+									"key": "looking_for",
+									"value": "looking_for",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/C:/Users/Admin/Downloads/Ecommerce-templates/placeholder.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company-member/add",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company-member",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company-member",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"company_member_id\": \"009be47a-c98b-4575-8edf-c98e21fef035\",\r\n    \"socials\": [\"linkedin\", \"salesforce\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company-member/update",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company-member",
+								"update"
 							]
 						}
 					},
@@ -205,7 +333,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiOGY0YTc5OGItYTA2MS00ZmE4LTkzNTktYjlmMzRlMjUyZTNiIiwiZW1haWwiOiJha3NoYXkubWFpbGluYXRvckBtYWlsaW5hdG9yLmNvbSJ9LCJpYXQiOjE3MzE1OTQwMzUsImV4cCI6MTczMTY4MDQzNX0.CAQNYgTr-B76meUpEYJuKi2iK0SDXwWRVVa_AnR8t2g",
+				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiZjViODczZjUtMTZjNS00YjA5LWFkYWUtMWM4MWI3ZjI4ZTFkIiwiZW1haWwiOiJha3NoYXkxLm1haWxpbmF0b3JAbWFpbGluYXRvci5jb20ifSwiaWF0IjoxNzMyMDE2NzI0LCJleHAiOjE3MzIxMDMxMjR9.tjgCIM0bjWn4QKt8ARvW_LNvoRiZlNfEEFIvy2qH9pU",
 				"type": "string"
 			}
 		]
