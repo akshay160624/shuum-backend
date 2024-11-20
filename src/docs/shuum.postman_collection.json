@@ -39,6 +39,24 @@
 				},
 				{
 					"name": "Verify Otp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the JSON response body\r",
+									"var jsonData = pm.response.json();\r",
+									"\r",
+									"// Set the access_token in the environment variable if it exists\r",
+									"if (jsonData?.data?.token) {\r",
+									"    pm.environment.set(\"access_token\", jsonData.data.token);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -152,7 +170,7 @@
 								},
 								{
 									"key": "industry",
-									"value": "IT",
+									"value": "RENEWABLE_ENERGY",
 									"type": "text"
 								}
 							]
@@ -212,7 +230,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/company/list?search_text=",
+							"raw": "{{baseUrl}}/api/company/list",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -224,7 +242,8 @@
 							"query": [
 								{
 									"key": "search_text",
-									"value": ""
+									"value": "",
+									"disabled": true
 								}
 							]
 						}
@@ -252,7 +271,7 @@
 							"formdata": [
 								{
 									"key": "company_id",
-									"value": "2d8f0957-fa4f-4d30-bf9d-375ade8dc39b",
+									"value": "69a62f65-45dc-4821-ad43-9efd56b71e63",
 									"type": "text"
 								},
 								{
@@ -274,6 +293,16 @@
 									"key": "image",
 									"type": "file",
 									"src": "/C:/Users/Admin/Downloads/Ecommerce-templates/placeholder.png"
+								},
+								{
+									"key": "profile_keywords",
+									"value": "NET_ZERO",
+									"type": "text"
+								},
+								{
+									"key": "organization",
+									"value": "ABC",
+									"type": "text"
 								}
 							]
 						},
@@ -304,7 +333,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"company_member_id\": \"009be47a-c98b-4575-8edf-c98e21fef035\",\r\n    \"socials\": [\"linkedin\", \"salesforce\"]\r\n}",
+							"raw": "{\r\n    \"company_member_id\": \"009be47a-c98b-4575-8edf-c98e21fef035\",\r\n    // \"socials\": [\"linkedin\", \"salesforce\"],\r\n    \"first_name\": \"Akshay\",\r\n    \"last_name\": \"Mistry\",\r\n    \"password\": \"ABCD\",\r\n    \"confirm_password\": \"ABCD\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -333,7 +362,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbk9iamVjdCI6eyJ1c2VyX2lkIjoiZjViODczZjUtMTZjNS00YjA5LWFkYWUtMWM4MWI3ZjI4ZTFkIiwiZW1haWwiOiJha3NoYXkxLm1haWxpbmF0b3JAbWFpbGluYXRvci5jb20ifSwiaWF0IjoxNzMyMDE2NzI0LCJleHAiOjE3MzIxMDMxMjR9.tjgCIM0bjWn4QKt8ARvW_LNvoRiZlNfEEFIvy2qH9pU",
+				"value": "{{access_token}}",
 				"type": "string"
 			}
 		]
@@ -358,6 +387,13 @@
 					""
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "default"
 		}
 	]
 }
