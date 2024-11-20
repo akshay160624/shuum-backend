@@ -72,3 +72,7 @@ export async function createJwtToken(user) {
     throw err;
   }
 }
+
+export const findOptionByValue = (options, value) => {
+  return options.find((option) => option.value.toUpperCase() === value.toUpperCase().trim()) || null;
+};

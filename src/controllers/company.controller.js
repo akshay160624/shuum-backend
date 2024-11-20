@@ -5,12 +5,13 @@ import { aggregateFromDb, insertManyToDb, insertOneToDb } from "../services/mong
 import { companyInsertRequestValidate } from "../services/validations/company.validations.js";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
-import { UNCLAIMED, timestamp } from "../services/helpers/constants.js";
+import { INDUSTRY_OPTIONS, UNCLAIMED, timestamp } from "../services/helpers/constants.js";
 import { fetchCompany } from "../services/validations/db.services.js";
 import { INVALID_REQUEST } from "../services/helpers/response-message.js";
 import csv from "csvtojson";
 import axios from "axios";
 import { deleteCache, getCache, hasCache, setCache } from "../services/helpers/cache.js";
+import { findOptionByValue } from "../services/utility.js";
 const { isEmpty } = lodash;
 
 export const addCompany = async (req, res) => {
@@ -26,6 +27,14 @@ export const addCompany = async (req, res) => {
 
     const { user } = req;
     const { company_name: companyName = "", industry: industry = "" } = req.body;
+
+    // industry available then validate
+    if (!isEmpty(industry)) {
+      const industryOption = findOptionByValue(INDUSTRY_OPTIONS, industry);
+      if (!industryOption) {
+        return responseHelper.error(res, "Invalid industry value", BAD_REQUEST);
+      }
+    }
 
     const companyFilter = {
       company_name: {
@@ -46,13 +55,9 @@ export const addCompany = async (req, res) => {
       website: "",
       established_year: "",
       founder: "",
-      street: "",
-      city: "",
-      state: "",
-      country: "",
       postal_code: "",
       headquarters: "",
-      industry: industry ? industry.trim() : "",
+      industry: industry ? industry.toUpperCase().trim() : "",
       key_services: "",
       focus_area: "",
       description: "",
@@ -62,6 +67,10 @@ export const addCompany = async (req, res) => {
       createdBy: user?.user_id || "",
       ...timestamp,
     };
+
+    console.log(companyDetails);
+    console.log("---end---");
+    process.exit();
 
     // insert into the database
     const companySaved = await insertOneToDb(COMPANY_TABLE, companyDetails);
@@ -140,18 +149,6 @@ export const companyList = async (req, res) => {
           founder: {
             $first: "$founder",
           },
-          street: {
-            $first: "$street",
-          },
-          city: {
-            $first: "$city",
-          },
-          state: {
-            $first: "$state",
-          },
-          country: {
-            $first: "$country",
-          },
           postal_code: {
             $first: "$postal_code",
           },
@@ -206,10 +203,6 @@ export const companyList = async (req, res) => {
           website: 1,
           established_year: 1,
           founder: 1,
-          street: 1,
-          city: 1,
-          state: 1,
-          country: 1,
           postal_code: 1,
           headquarters: 1,
           industry: 1,
@@ -238,7 +231,7 @@ export const companyList = async (req, res) => {
     if (!isEmpty(companyList)) {
       return responseHelper.success(res, "Company list fetched successfully", SUCCESS, companyList);
     } else {
-      return responseHelper.error(res, "No company found for the provided search criteria", NOT_FOUND);
+      return responseHelper.error(res, "No company found", NOT_FOUND);
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);
@@ -282,10 +275,6 @@ export const importCompanies = async (req, res) => {
         website: companyData?.website.trim() || "",
         established_year: companyData?.established_year.trim() || "",
         founder: companyData?.founder.trim() || "",
-        street: companyData?.street.trim() || "",
-        city: companyData?.city.trim() || "",
-        state: companyData?.state.trim() || "",
-        country: companyData?.country.trim() || "",
         postal_code: companyData?.postal_code.trim() || "",
         headquarters: companyData?.headquarters.trim() || "",
         industry: companyData?.industry.trim() || "",

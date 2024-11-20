@@ -4,9 +4,10 @@ import * as responseHelper from "../services/helpers/response-helper.js";
 import { insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
-import { ACTIVE, timestamp } from "../services/helpers/constants.js";
+import { ACTIVE, ORGANIZATION_OPTIONS, PROFILE_KEYWORDS_OPTIONS, timestamp } from "../services/helpers/constants.js";
 import { companyMemberInsertRequestValidate, updateCompanyMemberRequestValidate } from "../services/validations/company-member.validations.js";
 import { fetchCompany, fetchCompanyMember } from "../services/validations/db.services.js";
+import { findOptionByValue } from "../services/utility.js";
 const { isEmpty } = lodash;
 
 export const addCompanyMember = async (req, res) => {
@@ -23,6 +24,23 @@ export const addCompanyMember = async (req, res) => {
     const { user } = req;
     const { company_id: companyId = "", role = "", about_me: aboutMe = "", looking_for: lookingFor = "", profile_keywords: profileKeywords = "", organization = "" } = req.body;
 
+    // profileKeywords available then validate
+    if (!isEmpty(profileKeywords)) {
+      const profileKeywordsOption = findOptionByValue(PROFILE_KEYWORDS_OPTIONS, profileKeywords);
+      if (!profileKeywordsOption) {
+        return responseHelper.error(res, "Invalid keyword value", BAD_REQUEST);
+      }
+    }
+
+    // TODO: Add organization validation and options
+    // organization available then validate
+    // if (!isEmpty(organization)) {
+    //   const organizationOption = findOptionByValue(ORGANIZATION_OPTIONS, organization);
+    //   if (!organizationOption) {
+    //     return responseHelper.error(res, "Invalid organization value", BAD_REQUEST);
+    //   }
+    // }
+
     const companyFilter = {
       company_id: companyId,
     };
@@ -36,12 +54,12 @@ export const addCompanyMember = async (req, res) => {
     const companyMemberData = {
       company_member_id: uuidv4(),
       company_id: companyId,
-      user_id: user.user_id,
-      role: role,
-      about_me: aboutMe,
-      looking_for: lookingFor,
-      profile_keywords: profileKeywords, //TODO: Waiting for field confirmation
-      organization: organization, //TODO: Waiting for field confirmation
+      user_id: user?.user_id,
+      role: role.trim(),
+      about_me: aboutMe.trim(),
+      looking_for: lookingFor.trim(),
+      profile_keywords: profileKeywords.toUpperCase().trim(), //TODO: Waiting for field confirmation
+      organization: organization.toUpperCase().trim(), //TODO: Waiting for field confirmation
       image_url: location,
       image_name: originalname,
       socials: [],
