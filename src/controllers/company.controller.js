@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { INDUSTRY_OPTIONS, UNCLAIMED, timestamp } from "../services/helpers/constants.js";
 import { fetchCompany } from "../services/validations/db.services.js";
-import { INVALID_REQUEST } from "../services/helpers/response-message.js";
+import { INVALID_REQUEST, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import csv from "csvtojson";
 import axios from "axios";
 import { deleteCache, getCache, hasCache, setCache } from "../services/helpers/cache.js";
@@ -67,10 +67,6 @@ export const addCompany = async (req, res) => {
       createdBy: user?.user_id || "",
       ...timestamp,
     };
-
-    console.log(companyDetails);
-    console.log("---end---");
-    process.exit();
 
     // insert into the database
     const companySaved = await insertOneToDb(COMPANY_TABLE, companyDetails);

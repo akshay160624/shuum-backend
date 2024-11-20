@@ -7,7 +7,8 @@ import lodash from "lodash";
 import { ACTIVE, ORGANIZATION_OPTIONS, PROFILE_KEYWORDS_OPTIONS, timestamp } from "../services/helpers/constants.js";
 import { companyMemberInsertRequestValidate, updateCompanyMemberRequestValidate } from "../services/validations/company-member.validations.js";
 import { fetchCompany, fetchCompanyMember } from "../services/validations/db.services.js";
-import { findOptionByValue } from "../services/utility.js";
+import { encryptPasswordToHash, findOptionByValue } from "../services/utility.js";
+import { SOMETHING_WENT_WRONG } from "./../services/helpers/response-message.js";
 const { isEmpty } = lodash;
 
 export const addCompanyMember = async (req, res) => {
@@ -88,18 +89,43 @@ export const updateCompanyMember = async (req, res) => {
     const isNotValid = await updateCompanyMemberRequestValidate(req.body);
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
-    const { company_member_id: companyMemberId, socials } = req.body;
+    const { company_member_id: companyMemberId, socials, first_name: firstName, last_name: lastName, password, confirm_password: confirmPassword } = req.body;
 
-    const companyMemberFilter = {
-      company_member_id: companyMemberId,
-    };
+    const companyMemberFilter = { company_member_id: companyMemberId };
     const isCompanyExist = await fetchCompanyMember(companyMemberFilter);
     if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company member does not exists!`, NOT_FOUND);
 
-    const updateData = {
-      socials: socials,
-      updatedAt: new Date(),
-    };
+    const updateData = { updatedAt: new Date() };
+
+    if (!isEmpty(socials)) {
+      updateData.socials = socials;
+    }
+    if (!isEmpty(firstName)) {
+      updateData.first_name = firstName;
+    }
+    if (!isEmpty(lastName)) {
+      updateData.last_name = lastName;
+    }
+
+    // validate password
+    if (password !== undefined) {
+      let message = "";
+      if (!password.trim()) {
+        message = "Password cannot be empty";
+      } else if (!confirmPassword) {
+        message = "Confirm password is required with password";
+      } else if (password.trim() !== confirmPassword.trim()) {
+        message = "Password does not match";
+      }
+      if (message) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+    }
+
+    if (password) {
+      const encryptedPassword = await encryptPasswordToHash(password);
+      updateData.password = encryptedPassword;
+    }
 
     const memberDataUpdated = await updateOneToDb(COMPANY_MEMBER_TABLE, companyMemberFilter, updateData);
     if (memberDataUpdated) {

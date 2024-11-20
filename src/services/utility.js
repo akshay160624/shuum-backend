@@ -1,5 +1,7 @@
 import { createTransport } from "nodemailer";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 const service = process.env.EMAIL_SERVICE;
 const fromEmail = process.env.EMAIL_FROM;
@@ -76,3 +78,41 @@ export async function createJwtToken(user) {
 export const findOptionByValue = (options, value) => {
   return options.find((option) => option.value.toUpperCase() === value.toUpperCase().trim()) || null;
 };
+
+export const decryptEmail = (encryptedEmail) => {
+  const cypherKey = crypto.createHash("sha256").update("Shuum-sCSovQtN3JUYWhGyn7Pf").digest("base64").substr(0, 32);
+
+  const parts = encryptedEmail.split(":");
+  const iv = Buffer.from(parts[0], "hex");
+  const encryptedText = Buffer.from(parts[1], "hex");
+
+  const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(cypherKey, "utf8"), iv);
+
+  let decryptedEmail = decipher.update(encryptedText, "hex", "utf8");
+  decryptedEmail += decipher.final("utf8");
+
+  return decryptedEmail;
+};
+
+export async function encryptPasswordToHash(plainTextPassword) {
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(plainTextPassword.trim(), 10, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+export async function comparePasswords(password, hashPassword) {
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(password.trim(), hashPassword, (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(result);
+    });
+  });
+}
