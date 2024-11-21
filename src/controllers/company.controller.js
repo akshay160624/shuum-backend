@@ -109,7 +109,7 @@ export const companyList = async (req, res) => {
       },
       {
         $lookup: {
-          from: "company_members",
+          from: "users",
           localField: "company_id",
           foreignField: "company_id",
           as: "companyMembers",
@@ -185,7 +185,7 @@ export const companyList = async (req, res) => {
           },
           // Count the number of company members
           members_images: {
-            $push: "$companyMembers.image_url", // Collect image URLs of company members
+            $push: "$companyMembers.profile_url", // Collect image URLs of company members
           },
         },
       },

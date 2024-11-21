@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay1.mailinator@mailinator.com\"\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -62,7 +62,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay1.mailinator@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\",\r\n    \"otp\": 606438\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -78,6 +78,52 @@
 								"api",
 								"auth",
 								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Password Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the JSON response body\r",
+									"var jsonData = pm.response.json();\r",
+									"\r",
+									"// Set the access_token in the environment variable if it exists\r",
+									"if (jsonData?.data?.token) {\r",
+									"    pm.environment.set(\"access_token\", jsonData.data.token);\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"akshay.mailinator@mailinator.com\",\r\n    \"password\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
 							]
 						}
 					},
@@ -106,34 +152,6 @@
 								"api",
 								"auth",
 								"get-otp"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update UserInfo",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Akshay Mistry\",\r\n    \"role\": \"SUPER ADMIN\",\r\n    \"linkedin\": \"https://www.google.com\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/update",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"update"
 							]
 						}
 					},
@@ -253,16 +271,44 @@
 			]
 		},
 		{
-			"name": "Company Member",
+			"name": "User",
 			"item": [
 				{
-					"name": "Add",
+					"name": "Update UserInfo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Akshay Mistry\",\r\n    \"role\": \"BUSINESS_DEVELOPMENT_&_SALES\",\r\n    // ROLE OPTIONS: {\r\n    //      BUSINESS_DEVELOPMENT_&_SALES\r\n    //      CONSULTING_&_ADVISORY\r\n    //      INVESTMENTS_&_FINANCING\r\n    // }\r\n    \"linkedin_url\": \"https://www.google.com\",\r\n    \"password\": \"123456\",\r\n    \"confirm_password\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/update-info",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"update-info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile(Member)",
 					"request": {
 						"method": "POST",
 						"header": [
 							{
 								"key": "foldername",
-								"value": "company-member",
+								"value": "user-profile",
 								"type": "text"
 							}
 						],
@@ -271,12 +317,12 @@
 							"formdata": [
 								{
 									"key": "company_id",
-									"value": "69a62f65-45dc-4821-ad43-9efd56b71e63",
+									"value": "bea71648-e5d1-4c4f-a3bb-43596592906e",
 									"type": "text"
 								},
 								{
 									"key": "role",
-									"value": "ADMIN",
+									"value": "BUSINESS_DEVELOPMENT_&_SALES",
 									"type": "text"
 								},
 								{
@@ -301,54 +347,30 @@
 								},
 								{
 									"key": "organization",
-									"value": "ABC",
+									"value": "ABCxx",
+									"type": "text"
+								},
+								{
+									"key": "socials[0]",
+									"value": "linkedin",
+									"type": "text"
+								},
+								{
+									"key": "socials[1]",
+									"value": "salesforce",
 									"type": "text"
 								}
 							]
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/company-member/add",
+							"raw": "{{baseUrl}}/api/auth/update-profile",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"company-member",
-								"add"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "foldername",
-								"value": "company-member",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"company_member_id\": \"009be47a-c98b-4575-8edf-c98e21fef035\",\r\n    // \"socials\": [\"linkedin\", \"salesforce\"],\r\n    \"first_name\": \"Akshay\",\r\n    \"last_name\": \"Mistry\",\r\n    \"password\": \"ABCD\",\r\n    \"confirm_password\": \"ABCD\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/company-member/update",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"company-member",
-								"update"
+								"auth",
+								"update-profile"
 							]
 						}
 					},

@@ -34,21 +34,24 @@ export const getOtpRequestValidate = async (req, res) => {
   return null;
 };
 
-export const verifyUpdateUserInfoRequestValidate = async (req, res) => {
+export const passwordLoginRequestValidate = async (req, res) => {
   const schema = Joi.object({
-    name: Joi.string().required().messages({
-      "string.empty": "name is required",
-      "any.required": "name is required",
-    }),
-    role: Joi.string().required().messages({
-      "string.empty": "role is required",
-      "any.required": "role is required",
-    }),
-    linkedin: Joi.string().uri().required().messages({
-      "string.empty": "linkedin profile is required",
-      "any.required": "linkedin profile is required",
-      "string.uri": "linkedin profile must be a valid URL",
-    }),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }).unknown(true);
+  const { error } = schema.validate(req);
+  if (error) {
+    return error;
+  }
+  return null;
+};
+
+export const updateProfileRequestValidate = async (req, res) => {
+  const schema = Joi.object({
+    company_id: Joi.string().required(),
+    role: Joi.string().required(),
+    about_me: Joi.string().required(),
+    looking_for: Joi.string().required(),
   }).unknown(true);
   const { error } = schema.validate(req);
   if (error) {

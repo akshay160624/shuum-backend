@@ -10,6 +10,13 @@ export const timestamp = {
   updatedAt: new Date(),
 };
 
+// company 2 "role" dropdown options
+export const ROLE_OPTIONS = [
+  { value: "BUSINESS_DEVELOPMENT_&_SALES", label: "Business Development & Sales" },
+  { value: "CONSULTING_&_ADVISORY", label: "Consulting & Advisory" },
+  { value: "INVESTMENTS_&_FINANCING", label: "Investments & Financing" },
+];
+
 // company 5 "industry" dropdown options
 export const INDUSTRY_OPTIONS = [
   { value: "RENEWABLE_ENERGY", label: "Renewable Energy" },
