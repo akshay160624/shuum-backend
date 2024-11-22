@@ -33,7 +33,9 @@ export const register = async (req, res) => {
 
     // check user exist in db
     const userExist = await fetchOneFromDb(USER_TABLE, userFilter);
-    if (!isEmpty(userExist)) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
+
+    // validate signup is completed
+    if (userExist?.signup_completed === true) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
 
     // generate random 6 digit otp
     const { otp, otpExpires } = generateOtpWithExpiry();
@@ -45,30 +47,45 @@ export const register = async (req, res) => {
     //sending email to user
     await sendEmail(email, emailBody, "Verify-Otp");
 
-    // create user insert data
-    const userData = {
-      user_id: uuidv4(),
-      email: email.trim(),
-      name: "",
-      otp: otp,
-      otp_expiry: otpExpires,
-      profile_details: {
-        role: "",
-        about_me: "",
-        looking_for: "",
-        profile_keywords: "",
-        organization: "",
-        linkedin_url: "",
-      },
-      socials: [],
-      password: "",
-      email_verified: false,
-      status: INACTIVE,
-      ...timestamp,
-    };
+    let userSaved = false;
+    if (userExist?.signup_completed === false) {
+      // update otp and otp expiry
+      const userUpdateData = {
+        otp: otp,
+        otp_expiry: otpExpires,
+        updatedAt: new Date(),
+      };
 
-    // insert into the database
-    const userSaved = await insertOneToDb(USER_TABLE, userData);
+      // update user data
+      userSaved = await updateOneToDb(USER_TABLE, { user_id: userExist.user_id }, userUpdateData);
+    } else {
+      // create user insert data
+      const userData = {
+        user_id: uuidv4(),
+        email: email.trim(),
+        name: "",
+        otp: otp,
+        otp_expiry: otpExpires,
+        profile_details: {
+          role: "",
+          about_me: "",
+          looking_for: "",
+          profile_keywords: "",
+          organization: "",
+          linkedin_url: "",
+        },
+        socials: [],
+        password: "",
+        email_verified: false,
+        signup_completed: false,
+        status: INACTIVE,
+        ...timestamp,
+      };
+
+      // insert into the database
+      userSaved = await insertOneToDb(USER_TABLE, userData);
+    }
+
     if (userSaved) {
       return responseHelper.success(res, EMAIL_SENT, SUCCESS);
     } else {
@@ -105,6 +122,10 @@ export const verifyOtp = async (req, res) => {
       email_verified: true,
       updatedAt: new Date(),
     };
+
+    if (userExist?.signup_completed === false) {
+      userUpdateData.signup_completed = true;
+    }
 
     // update user data
     const otpVerified = await updateOneToDb(USER_TABLE, { user_id: userExist.user_id }, userUpdateData);
