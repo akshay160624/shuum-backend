@@ -6,7 +6,7 @@ import { companyInsertRequestValidate } from "../services/validations/company.va
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { INDUSTRY_OPTIONS, UNCLAIMED, timestamp } from "../services/helpers/constants.js";
-import { fetchCompany } from "../services/validations/db.services.js";
+import { fetchCompany } from "../services/db.services.js";
 import { INVALID_REQUEST, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import csv from "csvtojson";
 import axios from "axios";

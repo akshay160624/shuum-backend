@@ -11,7 +11,7 @@ import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany } from "../services/validations/db.services.js";
+import { fetchCompany } from "../services/db.services.js";
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
