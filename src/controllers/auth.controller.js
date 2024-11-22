@@ -153,6 +153,7 @@ export const getOtp = async (req, res) => {
 
     const userFilter = {
       email: email.trim(),
+      signup_completed: true,
       // status: ACTIVE,
     };
 
