@@ -11,7 +11,7 @@ import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany } from "../services/db.services.js";
+import { fetchCompany, updateAuthUser } from "../services/db.services.js";
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,15 +49,7 @@ export const register = async (req, res) => {
 
     let userSaved = false;
     if (userExist?.signup_completed === false) {
-      // update otp and otp expiry
-      const userUpdateData = {
-        otp: otp,
-        otp_expiry: otpExpires,
-        updatedAt: new Date(),
-      };
-
-      // update user data
-      userSaved = await updateOneToDb(USER_TABLE, { user_id: userExist.user_id }, userUpdateData);
+      userSaved = await updateAuthUser(userExist, otp, otpExpires);
     } else {
       // create user insert data
       const userData = {

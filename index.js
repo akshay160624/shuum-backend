@@ -1,21 +1,43 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import "./src/connection/server.js";
 import * as dotenv from "dotenv";
+import "./src/connection/server.js";
+import "./src/config/passport.js";
+import passport from "passport";
+import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
-const PORT = process.env.PORT || 8000;
 
 // routes
 import userAuth from "./src/routes/auth.routes.js";
 import company from "./src/routes/company.routes.js";
+import googleAuth from "./src/routes/google-auth.routes.js";
+
+const PORT = process.env.PORT || 8000;
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// Sessions
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      secure: process.env.ENVIRONMENT_NAME === "PROD",
+    },
+  })
+);
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(cors());
 app.use(express.json(app));
@@ -34,3 +56,4 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", userAuth);
 app.use("/api/company", company);
+app.use("/auth", googleAuth); // google Oauth
