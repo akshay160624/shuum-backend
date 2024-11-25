@@ -1,12 +1,13 @@
 import jwt from "jsonwebtoken";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { TOKEN_NOTFOUND, USER_NOTFOUND } from "../services/helpers/response-message.js";
-import { NOT_FOUND } from "../services/helpers/status-code.js";
+import { TOKEN_NOTFOUND, UNAUTHORIZED_ACCESS, USER_NOTFOUND } from "../services/helpers/response-message.js";
+import { NOT_FOUND, UNAUTHORIZED } from "../services/helpers/status-code.js";
 import { fetchOneFromDb } from "../services/mongodb.js";
 import { USER_TABLE } from "../services/helpers/db-tables.js";
 import lodash from "lodash";
 const { isEmpty } = lodash;
 
+// JWT middleware
 export const verifyUserAuthToken = async (req, res, next) => {
   if (!req.header("Authorization")) {
     return responseHelper.error(res, TOKEN_NOTFOUND, NOT_FOUND);
@@ -28,8 +29,8 @@ export const verifyUserAuthToken = async (req, res, next) => {
           next();
         }
       }
-    } catch (e) {
-      return responseHelper.error(res, e.message, NOT_FOUND);
+    } catch (err) {
+      return responseHelper.error(res, err.message, UNAUTHORIZED);
     }
   }
 };
