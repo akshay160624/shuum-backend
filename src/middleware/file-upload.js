@@ -26,7 +26,7 @@ export const uploadS3File = multer({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
     destination: (req, file, cb) => {
-      const folderPath = req.headers.foldername ? req.headers.foldername + "/" : "";
+      const folderPath = "company-excel";
       cb(null, folderPath);
     },
     contentType: multerS3.AUTO_CONTENT_TYPE,
@@ -35,10 +35,10 @@ export const uploadS3File = multer({
     },
 
     key: function (req, file, cb) {
-      const foldername = req.headers.foldername;
-      if (!foldername) {
-        return cb(new Error("Please provide a bucket folder name"));
-      }
+      const foldername = "company-excel";
+      // if (!foldername) {
+      //   return cb(new Error("Please provide a bucket folder name"));
+      // }
       const filename = Date.now().toString() + "-" + file.originalname.replace(/ +/g, "");
       const filepath = foldername ? `${foldername}/${filename}` : filename;
       file.filename = filename;

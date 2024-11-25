@@ -70,6 +70,7 @@ export const register = async (req, res) => {
         password: "",
         email_verified: false,
         signup_completed: false,
+        onboarding_steps: "",
         status: INACTIVE,
         ...timestamp,
       };
@@ -296,6 +297,7 @@ export const updateUserProfile = async (req, res) => {
       profile_keywords: profileKeywords = [],
       organization = "",
       socials = [],
+      onboarding_steps: onboardingSteps = "",
     } = req.body;
 
     // profileKeywords available then validate
@@ -345,6 +347,7 @@ export const updateUserProfile = async (req, res) => {
     };
 
     if (name) profileData.name = name;
+    if (onboardingSteps) profileData.onboarding_steps = onboardingSteps;
     if (!isEmpty(profileKeywords)) {
       if (Array.isArray(profileKeywords) && profileKeywords.every((item) => typeof item === "string")) {
         profileData.profile_details.profile_keywords = profileKeywords;
@@ -385,3 +388,20 @@ export const updateUserProfile = async (req, res) => {
     return responseHelper.error(res, err.message, ERROR);
   }
 };
+
+export const getOnboardingSteps = async (req, res) => {
+  try {
+    const { user } = req;
+    if (isEmpty(user)) return responseHelper.error(res, "Invalid request", BAD_REQUEST);
+
+    const onboardingSteps = await fetchOneFromDb(USER_TABLE, { user_id: user.user_id})
+    
+    const responseData = {
+      onboarding_steps: onboardingSteps.onboarding_steps
+    }
+    return responseHelper.success(res, "Onboarding steps fetched successfully", SUCCESS, responseData);
+  } catch (err) {
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+

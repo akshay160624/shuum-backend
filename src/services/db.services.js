@@ -47,6 +47,7 @@ export const registerAuthUser = async (email, otp = null, otpExpires = null) => 
       password: "",
       email_verified: true,
       signup_completed: true,
+      onboarding_steps: "",
       status: INACTIVE,
       ...timestamp,
     };

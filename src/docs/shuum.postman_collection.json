@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\"\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay12345.mailinator@mailinator.com\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -62,7 +62,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\",\r\n    \"otp\": 606438\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay123.mailinator@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -170,7 +170,8 @@
 							{
 								"key": "foldername",
 								"value": "company",
-								"type": "text"
+								"type": "text",
+								"disabled": true
 							}
 						],
 						"body": {
@@ -179,11 +180,11 @@
 								{
 									"key": "image",
 									"type": "file",
-									"src": "/C:/Users/Admin/Downloads/Ecommerce-templates/placeholder.png"
+									"src": "/C:/Users/Admin/Pictures/unsamples/image-7.jpg"
 								},
 								{
 									"key": "company_name",
-									"value": "Zoho",
+									"value": "Zed",
 									"type": "text"
 								},
 								{
@@ -274,6 +275,37 @@
 			"name": "User",
 			"item": [
 				{
+					"name": "Get Onboarding",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/get-onboarding",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"get-onboarding"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Update UserInfo",
 					"request": {
 						"method": "POST",
@@ -309,7 +341,8 @@
 							{
 								"key": "foldername",
 								"value": "user-profile",
-								"type": "text"
+								"type": "text",
+								"disabled": true
 							}
 						],
 						"body": {
@@ -317,7 +350,7 @@
 							"formdata": [
 								{
 									"key": "company_id",
-									"value": "bea71648-e5d1-4c4f-a3bb-43596592906e",
+									"value": "6837632a-a1f7-40c8-a1fc-dd3e58a3bd7c",
 									"type": "text"
 								},
 								{
@@ -341,14 +374,20 @@
 									"src": "/C:/Users/Admin/Downloads/Ecommerce-templates/placeholder.png"
 								},
 								{
-									"key": "profile_keywords",
+									"key": "profile_keywords[0]",
+									"value": "CLEAN_TECHNOLOGY",
+									"type": "text"
+								},
+								{
+									"key": "profile_keywords[1]",
 									"value": "NET_ZERO",
 									"type": "text"
 								},
 								{
 									"key": "organization",
 									"value": "ABCxx",
-									"type": "text"
+									"type": "text",
+									"disabled": true
 								},
 								{
 									"key": "socials[0]",
@@ -358,6 +397,16 @@
 								{
 									"key": "socials[1]",
 									"value": "salesforce",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Akshay",
+									"type": "text"
+								},
+								{
+									"key": "onboarding_steps",
+									"value": "XYZA",
 									"type": "text"
 								}
 							]

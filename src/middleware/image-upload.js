@@ -20,13 +20,13 @@ const imageFilter = (req, file, cb) => {
   cb(undefined, true);
 };
 
-export const uploadS3Image = multer({
+export const uploadCompanyS3Image = multer({
   fileFilter: imageFilter,
   storage: multerS3({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
     destination: (req, file, cb) => {
-      const folderpath = req.headers.foldername ? req.headers.foldername + "/" : "";
+      const folderpath = "company";
       cb(null, folderpath);
     },
     contentType: multerS3.AUTO_CONTENT_TYPE,
@@ -35,12 +35,40 @@ export const uploadS3Image = multer({
     },
 
     key: function (req, file, cb) {
-      const foldername = req.headers.foldername;
-      if (!foldername) {
-        return cb(new Error("Please provide a bucket folder name"));
-      }
+      // const foldername = req.headers.foldername;
+      const foldername = "company";
+      // if (!foldername) {
+      //   return cb(new Error("Please provide a bucket folder name"));
+      // }
       const filename = Date.now().toString() + "-" + file.originalname.replace(/ +/g, "");
       const filepath = foldername ? `${foldername}/${filename}` : filename;
+      file.filename = filename;
+      cb(null, filepath);
+    },
+  }),
+});
+
+export const uploadUserProfileS3Image = multer({
+  fileFilter: imageFilter,
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.S3_BUCKET_NAME,
+    destination: (req, file, cb) => {
+      const folderName = "user-profile";
+      cb(null, folderName);
+    },
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname });
+    },
+
+    key: function (req, file, cb) {
+      const folderName = "user-profile";
+      // if (!foldername) {
+      //   return cb(new Error("Please provide a bucket folder name"));
+      // }
+      const filename = Date.now().toString() + "-" + file.originalname.replace(/ +/g, "");
+      const filepath = folderName ? `${folderName}/${filename}` : filename;
       file.filename = filename;
       cb(null, filepath);
     },

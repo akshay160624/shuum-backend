@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { getOtp, passwordLogin, register, updateUserInfo, updateUserProfile, verifyOtp } from "../controllers/auth.controller.js";
+import { getOnboardingSteps, getOtp, passwordLogin, register, updateUserInfo, updateUserProfile, verifyOtp } from "../controllers/auth.controller.js";
 import { verifyUserAuthToken } from "../middleware/verify-token.js";
-import { uploadS3Image, validMulterUploadMiddleware } from "../middleware/image-upload.js";
+import { uploadUserProfileS3Image, validMulterUploadMiddleware } from "../middleware/image-upload.js";
 
 const router = Router();
 
@@ -10,6 +10,8 @@ router.post("/verify-otp", verifyOtp); // otp login API
 router.post("/get-otp", getOtp); // for register and get-otp verify
 router.post("/login", passwordLogin); // password login API
 router.post("/update-info", verifyUserAuthToken, updateUserInfo); // update basic details
-router.post("/update-profile", verifyUserAuthToken, validMulterUploadMiddleware(uploadS3Image.single("image")), updateUserProfile); // update profile with image required
+router.post("/update-profile", verifyUserAuthToken, validMulterUploadMiddleware(uploadUserProfileS3Image.single("image")), updateUserProfile); // update profile with image required
+router.get("/get-onboarding", verifyUserAuthToken, getOnboardingSteps);
+
 
 export default router;
