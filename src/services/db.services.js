@@ -26,12 +26,12 @@ export const fetchUser = async () => {
 
 // insert new user in db
 export const registerAuthUser = async (email, otp = null, otpExpires = null) => {
-  const userExist = await fetchOneFromDb(USER_TABLE, { email: email.trim() });
+  const userExist = await fetchOneFromDb(USER_TABLE, { email: email.toLowerCase().trim() });
   if (!userExist) {
     // create user insert data
     const userData = {
       user_id: uuidv4(),
-      email: email.trim(),
+      email: email.toLowerCase().trim(),
       name: "",
       otp: otp,
       otp_expiry: otpExpires,
@@ -39,7 +39,7 @@ export const registerAuthUser = async (email, otp = null, otpExpires = null) => 
         role: "",
         about_me: "",
         looking_for: "",
-        profile_keywords: "",
+        profile_keywords: [],
         organization: "",
         linkedin_url: "",
       },

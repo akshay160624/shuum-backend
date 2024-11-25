@@ -27,7 +27,7 @@ export const register = async (req, res) => {
     const { email } = req.body;
 
     const userFilter = {
-      email: email.trim(),
+      email: email.toLowerCase().trim(),
       //   status: INACTIVE,
     };
 
@@ -54,7 +54,7 @@ export const register = async (req, res) => {
       // create user insert data
       const userData = {
         user_id: uuidv4(),
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         name: "",
         otp: otp,
         otp_expiry: otpExpires,
@@ -62,7 +62,7 @@ export const register = async (req, res) => {
           role: "",
           about_me: "",
           looking_for: "",
-          profile_keywords: "",
+          profile_keywords: [],
           organization: "",
           linkedin_url: "",
         },
@@ -98,7 +98,7 @@ export const verifyOtp = async (req, res) => {
     const { email, otp } = req.body;
 
     const userFilter = {
-      email: email.trim(),
+      email: email.toLowerCase().trim(),
       // status: ACTIVE,
     };
 
@@ -144,7 +144,7 @@ export const getOtp = async (req, res) => {
     const { email } = req.body;
 
     const userFilter = {
-      email: email.trim(),
+      email: email.toLowerCase().trim(),
       signup_completed: true,
       // status: ACTIVE,
     };
@@ -192,7 +192,7 @@ export const passwordLogin = async (req, res) => {
 
     // validate user
     const userFilter = {
-      email: email.trim(),
+      email: email.toLowerCase().trim(),
       // status: ACTIVE,
     };
 
@@ -234,11 +234,11 @@ export const updateUserInfo = async (req, res) => {
 
     // role available then validate
     if (!isEmpty(role)) {
-      const roleOption = findOptionByValue(ROLE_OPTIONS, role);
-      if (!roleOption) {
-        return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
-      }
-      userUpdateData.profile_details.role = role.toUpperCase().trim();
+      // const roleOption = findOptionByValue(ROLE_OPTIONS, role);
+      // if (!roleOption) {
+      //   return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
+      // }
+      userUpdateData.profile_details.role = role.trim();
     }
     if (!isEmpty(linkedinUrl)) {
       userUpdateData.profile_details.linkedin_url = linkedinUrl.trim();
@@ -287,15 +287,24 @@ export const updateUserProfile = async (req, res) => {
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
     const { user } = req;
-    const { company_id: companyId = "", role = "", about_me: aboutMe = "", looking_for: lookingFor = "", profile_keywords: profileKeywords = "", organization = "", socials = [] } = req.body;
+    const {
+      company_id: companyId = "",
+      name = "",
+      role = "",
+      about_me: aboutMe = "",
+      looking_for: lookingFor = "",
+      profile_keywords: profileKeywords = [],
+      organization = "",
+      socials = [],
+    } = req.body;
 
     // profileKeywords available then validate
-    if (!isEmpty(profileKeywords)) {
-      const profileKeywordsOption = findOptionByValue(PROFILE_KEYWORDS_OPTIONS, profileKeywords);
-      if (!profileKeywordsOption) {
-        return responseHelper.error(res, "Invalid keyword value", BAD_REQUEST);
-      }
-    }
+    // if (!isEmpty(profileKeywords)) {
+    //   const profileKeywordsOption = findOptionByValue(PROFILE_KEYWORDS_OPTIONS, profileKeywords);
+    //   if (!profileKeywordsOption) {
+    //     return responseHelper.error(res, "Invalid keyword value", BAD_REQUEST);
+    //   }
+    // }
 
     // TODO: Add organization validation and options
     // organization available then validate
@@ -315,12 +324,12 @@ export const updateUserProfile = async (req, res) => {
     if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
 
     // role available then validate
-    if (!isEmpty(role)) {
-      const roleOption = findOptionByValue(ROLE_OPTIONS, role);
-      if (!roleOption) {
-        return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
-      }
-    }
+    // if (!isEmpty(role)) {
+    //   const roleOption = findOptionByValue(ROLE_OPTIONS, role);
+    //   if (!roleOption) {
+    //     return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
+    //   }
+    // }
 
     const { location, originalname } = req.file;
 
@@ -330,11 +339,19 @@ export const updateUserProfile = async (req, res) => {
         role: role ? role.toUpperCase().trim() : user.profile_details?.role,
         about_me: aboutMe ? aboutMe.trim() : user.profile_details?.about_me,
         looking_for: lookingFor ? lookingFor.trim() : user.profile_details?.looking_for,
-        profile_keywords: profileKeywords ? profileKeywords.toUpperCase().trim() : user.profile_details?.profile_keywords,
         organization: organization ? organization.toUpperCase().trim() : user.profile_details?.organization,
       },
       updatedAt: new Date(),
     };
+
+    if (name) profileData.name = name;
+    if (!isEmpty(profileKeywords)) {
+      if (Array.isArray(profileKeywords) && profileKeywords.every((item) => typeof item === "string")) {
+        profileData.profile_details.profile_keywords = profileKeywords;
+      } else {
+        return responseHelper.error(res, "Profile keywords must be an array of strings", BAD_REQUEST);
+      }
+    }
 
     if (location) {
       profileData.profile_url = location;
