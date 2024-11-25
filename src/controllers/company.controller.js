@@ -185,12 +185,30 @@ export const companyList = async (req, res) => {
           },
           members: {
             $push: {
-              user_id: "$companyMembers.user_id",
-              email: "$companyMembers.email",
-              name: "$companyMembers.name",
-              image: "$companyMembers.profile_url"
-            }
-          }
+              $cond: [
+                { $ifNull: ["$companyMembers.user_id", false] }, // Check if user_id exists
+                {
+                  user_id: "$companyMembers.user_id",
+                  email: "$companyMembers.email",
+                  name: "$companyMembers.name",
+                  image: "$companyMembers.profile_url",
+                },
+                // Skip pushing null or invalid members
+                null,
+              ],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          members: {
+            $filter: {
+              input: "$members",
+              as: "member",
+              cond: { $ne: ["$$member", null] }, // Remove null values
+            },
+          },
         },
       },
       {
