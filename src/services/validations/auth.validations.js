@@ -49,9 +49,9 @@ export const passwordLoginRequestValidate = async (req, res) => {
 export const updateProfileRequestValidate = async (req, res) => {
   const schema = Joi.object({
     company_id: Joi.string().required(),
-    role: Joi.string().required(),
-    about_me: Joi.string().required(),
-    looking_for: Joi.string().required(),
+    // role: Joi.string().required(),
+    // about_me: Joi.string().required(),
+    // looking_for: Joi.string().required(),
   }).unknown(true);
   const { error } = schema.validate(req);
   if (error) {

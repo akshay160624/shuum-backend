@@ -183,10 +183,14 @@ export const companyList = async (req, res) => {
               },
             },
           },
-          // Count the number of company members
-          members_images: {
-            $push: "$companyMembers.profile_url", // Collect image URLs of company members
-          },
+          members: {
+            $push: {
+              user_id: "$companyMembers.user_id",
+              email: "$companyMembers.email",
+              name: "$companyMembers.name",
+              image: "$companyMembers.profile_url"
+            }
+          }
         },
       },
       {
@@ -208,8 +212,7 @@ export const companyList = async (req, res) => {
           company_image: 1,
           status: 1,
           members_count: 1,
-          members_images: 1, // Limit the members_images array to 3 images only
-          // members_images: { $slice: ["$members_images", 3] }, // Limit the members_images array to 3 images only
+          members: 1
         },
       },
     ];

@@ -1,8 +1,8 @@
 import { getOtpRequestValidate, passwordLoginRequestValidate, registerUserRequestValidate, updateProfileRequestValidate, verifyOtpRequestValidate } from "../services/validations/auth.validations.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
-import { USER_TABLE } from "../services/helpers/db-tables.js";
-import { INACTIVE, PROFILE_KEYWORDS_OPTIONS, ROLE_OPTIONS, timestamp } from "../services/helpers/constants.js";
+import { COMPANY_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
+import { CLAIMED, INACTIVE, PROFILE_KEYWORDS_OPTIONS, ROLE_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
 import { fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
@@ -327,16 +327,19 @@ export const updateUserProfile = async (req, res) => {
     const profileData = {
       company_id: companyId,
       profile_details: {
-        role: role.toUpperCase().trim(),
-        about_me: aboutMe.trim(),
-        looking_for: lookingFor.trim(),
-        profile_keywords: profileKeywords.toUpperCase().trim(),
-        organization: organization.toUpperCase().trim(),
+        role: role ? role.toUpperCase().trim() : user.profile_details?.role,
+        about_me: aboutMe ? aboutMe.trim() : user.profile_details?.about_me,
+        looking_for: lookingFor ? lookingFor.trim() : user.profile_details?.looking_for,
+        profile_keywords: profileKeywords ? profileKeywords.toUpperCase().trim() : user.profile_details?.profile_keywords,
+        organization: organization ? organization.toUpperCase().trim() : user.profile_details?.organization,
       },
-      profile_url: location,
-      profile_image_name: originalname,
       updatedAt: new Date(),
     };
+
+    if (location) {
+      profileData.profile_url = location;
+      profileData.profile_image_name = originalname;
+    }
 
     if (!isEmpty(socials)) {
       if (Array.isArray(socials) && socials.every((item) => typeof item === "string")) {
@@ -349,6 +352,14 @@ export const updateUserProfile = async (req, res) => {
     // insert into the database
     const profileSaved = await updateOneToDb(USER_TABLE, { user_id: user.user_id }, profileData);
     if (!isEmpty(profileSaved)) {
+      // if user choose company then update company status with "CLAIMED
+      if (companyExist.status === UNCLAIMED) {
+        const updateStatusData = {
+          status: CLAIMED,
+          updatedAt: new Date(),
+        };
+        await updateOneToDb(COMPANY_TABLE, { company_id: companyId }, updateStatusData);
+      }
       return responseHelper.success(res, "Profile details saved successfully", SUCCESS);
     } else {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
