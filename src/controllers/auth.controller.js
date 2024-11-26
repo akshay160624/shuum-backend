@@ -197,19 +197,19 @@ export const passwordLogin = async (req, res) => {
       // status: ACTIVE,
     };
 
-    const userExits = await fetchOneFromDb(USER_TABLE, userFilter);
-    if (isEmpty(userExits)) {
+    const userExists = await fetchOneFromDb(USER_TABLE, userFilter);
+    if (isEmpty(userExists)) {
       return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
     }
-    if (isEmpty(userExits.password)) {
+    if (isEmpty(userExists.password)) {
       return responseHelper.error(res, `Password is not configured.`, UNAUTHORIZED);
     }
 
-    const hashPassword = userExits.password;
+    const hashPassword = userExists.password;
     const passwordMatch = await comparePasswords(password, hashPassword);
     if (passwordMatch) {
       const responseData = {
-        token: await createJwtToken(userExits),
+        token: await createJwtToken(userExists),
       };
       return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
     } else {
@@ -300,14 +300,6 @@ export const updateUserProfile = async (req, res) => {
       onboarding_steps: onboardingSteps = "",
     } = req.body;
 
-    // profileKeywords available then validate
-    // if (!isEmpty(profileKeywords)) {
-    //   const profileKeywordsOption = findOptionByValue(PROFILE_KEYWORDS_OPTIONS, profileKeywords);
-    //   if (!profileKeywordsOption) {
-    //     return responseHelper.error(res, "Invalid keyword value", BAD_REQUEST);
-    //   }
-    // }
-
     // TODO: Add organization validation and options
     // organization available then validate
     // if (!isEmpty(organization)) {
@@ -333,7 +325,7 @@ export const updateUserProfile = async (req, res) => {
     //   }
     // }
 
-    const { location, originalname } = req.file;
+    const { location, originalname, filename: fileName } = req.file;
 
     const profileData = {
       company_id: companyId,
@@ -348,9 +340,19 @@ export const updateUserProfile = async (req, res) => {
 
     if (name) profileData.name = name;
     if (onboardingSteps) profileData.onboarding_steps = onboardingSteps;
+
     if (!isEmpty(profileKeywords)) {
       if (Array.isArray(profileKeywords) && profileKeywords.every((item) => typeof item === "string")) {
-        profileData.profile_details.profile_keywords = profileKeywords;
+        // Validate if all keywords exist in PROFILE_KEYWORDS_OPTIONS
+        const isValidKeywords = profileKeywords.every((keyword) => findOptionByValue(PROFILE_KEYWORDS_OPTIONS, keyword));
+
+        if (!isValidKeywords) {
+          return responseHelper.error(res, "Invalid profile keyword value", BAD_REQUEST);
+        }
+        // Convert all keywords to uppercase
+        const profileKeywordsUppercase = profileKeywords.map((keyword) => keyword.toUpperCase());
+
+        profileData.profile_details.profile_keywords = profileKeywordsUppercase;
       } else {
         return responseHelper.error(res, "Profile keywords must be an array of strings", BAD_REQUEST);
       }
@@ -358,7 +360,7 @@ export const updateUserProfile = async (req, res) => {
 
     if (location) {
       profileData.profile_url = location;
-      profileData.profile_image_name = originalname;
+      profileData.profile_image_name = fileName;
     }
 
     if (!isEmpty(socials)) {
@@ -394,11 +396,11 @@ export const getOnboardingSteps = async (req, res) => {
     const { user } = req;
     if (isEmpty(user)) return responseHelper.error(res, "Invalid request", BAD_REQUEST);
 
-    const onboardingSteps = await fetchOneFromDb(USER_TABLE, { user_id: user.user_id})
-    
+    const onboardingSteps = await fetchOneFromDb(USER_TABLE, { user_id: user.user_id });
+
     const responseData = {
-      onboarding_steps: onboardingSteps.onboarding_steps
-    }
+      onboarding_steps: onboardingSteps.onboarding_steps,
+    };
     return responseHelper.success(res, "Onboarding steps fetched successfully", SUCCESS, responseData);
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);

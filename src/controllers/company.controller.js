@@ -1,17 +1,18 @@
 import { COMPANY_TABLE } from "../services/helpers/db-tables.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { aggregateFromDb, insertManyToDb, insertOneToDb } from "../services/mongodb.js";
-import { companyInsertRequestValidate } from "../services/validations/company.validations.js";
+import { aggregateFromDb, fetchOneFromDb, insertManyToDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
+import { companyInsertRequestValidate, companyUpdateRequestValidate } from "../services/validations/company.validations.js";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
-import { INDUSTRY_OPTIONS, UNCLAIMED, timestamp } from "../services/helpers/constants.js";
+import { COMPANY_STATUS, INDUSTRY_OPTIONS, UNCLAIMED, companyS3BucketFolderName, timestamp } from "../services/helpers/constants.js";
 import { fetchCompany } from "../services/db.services.js";
 import { INVALID_REQUEST, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import csv from "csvtojson";
 import axios from "axios";
 import { deleteCache, getCache, hasCache, setCache } from "../services/helpers/cache.js";
-import { findOptionByValue } from "../services/utility.js";
+import { findOptionByValue, validateEmail, validateEstablishedYear, validatePhoneNumber, validatePostalCode, validateWebsiteURL } from "../services/utility.js";
+import { deleteFileFromS3 } from "../middleware/image-upload.js";
 const { isEmpty } = lodash;
 
 export const addCompany = async (req, res) => {
@@ -46,7 +47,7 @@ export const addCompany = async (req, res) => {
     const isCompanyExist = await fetchCompany(companyFilter);
     if (!isEmpty(isCompanyExist)) return responseHelper.error(res, `Company already exists!`, BAD_REQUEST);
 
-    const { location, originalname } = req.file;
+    const { location, originalname, filename: fileName } = req.file;
     const companyDetails = {
       company_id: uuidv4(),
       company_name: companyName.trim(),
@@ -62,7 +63,7 @@ export const addCompany = async (req, res) => {
       focus_area: "",
       description: "",
       image_url: location,
-      image_name: originalname,
+      image_name: fileName,
       status: UNCLAIMED,
       createdBy: user?.user_id || "",
       ...timestamp,
@@ -230,7 +231,7 @@ export const companyList = async (req, res) => {
           company_image: 1,
           status: 1,
           members_count: 1,
-          members: 1
+          members: 1,
         },
       },
     ];
@@ -311,6 +312,144 @@ export const importCompanies = async (req, res) => {
     const companiesSaved = await insertManyToDb(COMPANY_TABLE, companyDataToInsert);
     if (!isEmpty(companiesSaved)) {
       return responseHelper.success(res, `${companyDataToInsert.length} Companies added successfully`, SUCCESS);
+    } else {
+      return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
+    }
+  } catch (err) {
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+export const updateCompany = async (req, res) => {
+  try {
+    // Validate request
+    const isNotValid = await companyUpdateRequestValidate(req.body);
+    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+    const { user } = req; //  user from token
+    const {
+      company_id: companyId,
+      company_name: companyName = "",
+      phone,
+      email,
+      website,
+      established_year: establishedYear,
+      founder,
+      postal_code: postalCode,
+      headquarters,
+      industry: industry = "",
+      key_services: keyServices,
+      focus_area: focusArea,
+      description,
+      status,
+    } = req.body;
+
+    const companyFilter = {
+      company_id: companyId,
+    };
+
+    // check company exist in db
+    const isCompanyExist = await fetchCompany(companyFilter);
+    if (isEmpty(isCompanyExist)) return responseHelper.error(res, `Company does not exists!`, BAD_REQUEST);
+
+    const { location, originalname, filename: fileName } = req.file;
+    const companyUpdateData = { updatedAt: new Date() };
+
+    if (!isEmpty(companyName)) companyUpdateData.company_name = companyName.trim();
+    if (!isEmpty(phone)) {
+      // validate phone
+      const validationResult = validatePhoneNumber(phone);
+      if (!isEmpty(validationResult)) {
+        return responseHelper.error(res, validationResult, BAD_REQUEST);
+      }
+      companyUpdateData.phone = phone.trim();
+    }
+
+    if (!isEmpty(email)) {
+      // validate email
+      const validEmailResult = validateEmail(email);
+      if (!isEmpty(validEmailResult)) {
+        return responseHelper.error(res, validEmailResult, BAD_REQUEST);
+      }
+      const companyEmailFilter = {
+        company_id: { $ne: companyId },
+        email: email.toLowerCase().trim(),
+      };
+      const emailExist = await fetchOneFromDb(COMPANY_TABLE, companyEmailFilter);
+      if (!isEmpty(emailExist)) {
+        return responseHelper.error(res, "Email already exists", BAD_REQUEST);
+      }
+      companyUpdateData.email = email.toLowerCase().trim();
+    }
+
+    if (!isEmpty(website)) {
+      // validate website
+      const validUrlResult = validateWebsiteURL(website);
+      if (!isEmpty(validUrlResult)) {
+        return responseHelper.error(res, validUrlResult, BAD_REQUEST);
+      }
+      companyUpdateData.website = website.trim();
+    }
+
+    if (!isEmpty(establishedYear)) {
+      // validate established year
+      const validEstablishedYearResult = validateEstablishedYear(establishedYear);
+      if (!isEmpty(validEstablishedYearResult)) {
+        return responseHelper.error(res, validEstablishedYearResult, BAD_REQUEST);
+      }
+      companyUpdateData.established_year = establishedYear.trim();
+    }
+
+    if (!isEmpty(founder)) companyUpdateData.founder = founder.trim();
+
+    if (!isEmpty(postalCode)) {
+      // validate postal code year
+      const validPostalCodeResult = validatePostalCode(postalCode);
+      if (!isEmpty(validPostalCodeResult)) {
+        return responseHelper.error(res, validPostalCodeResult, BAD_REQUEST);
+      }
+      companyUpdateData.postal_code = postalCode.trim();
+    }
+
+    if (!isEmpty(headquarters)) companyUpdateData.headquarters = headquarters.trim();
+
+    // industry available then validate
+    if (!isEmpty(industry)) {
+      const industryOption = findOptionByValue(INDUSTRY_OPTIONS, industry);
+      if (!industryOption) {
+        return responseHelper.error(res, "Invalid industry value", BAD_REQUEST);
+      }
+      companyUpdateData.industry = industry.toUpperCase().trim();
+    }
+
+    if (!isEmpty(keyServices)) companyUpdateData.key_services = keyServices.trim();
+    if (!isEmpty(focusArea)) companyUpdateData.focus_area = focusArea.trim();
+    if (!isEmpty(description)) companyUpdateData.description = description.trim();
+
+    if (!isEmpty(location)) {
+      // if have image then delete old image from S3
+      const key = isCompanyExist.image_name;
+      await deleteFileFromS3(key, companyS3BucketFolderName);
+      companyUpdateData.image_url = location;
+      companyUpdateData.image_name = fileName;
+    }
+
+    if (!isEmpty(status)) {
+      const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
+      if (!validCompanyStatus) {
+        return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
+      }
+      companyUpdateData.status = status.toUpperCase().trim();
+    }
+
+    if (Object.keys(companyUpdateData).length > 1) {
+      companyUpdateData.updatedBy = user?.user_id;
+    }
+
+    // update user data
+    const companyUpdated = await updateOneToDb(COMPANY_TABLE, companyFilter, companyUpdateData);
+    if (companyUpdated) {
+      return responseHelper.success(res, "Company details update successfully", SUCCESS);
     } else {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }

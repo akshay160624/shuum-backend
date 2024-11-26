@@ -10,3 +10,14 @@ export const companyInsertRequestValidate = async (req, res) => {
   }
   return null;
 };
+
+export const companyUpdateRequestValidate = async (req, res) => {
+  const schema = Joi.object({
+    company_id: Joi.string().required(),
+  }).unknown(true);
+  const { error } = schema.validate(req);
+  if (error) {
+    return error;
+  }
+  return null;
+};

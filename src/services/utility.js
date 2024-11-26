@@ -116,3 +116,80 @@ export async function comparePasswords(password, hashPassword) {
     });
   });
 }
+
+export function validatePhoneNumber(phone) {
+  let message = "";
+  // Convert to string if it's a number
+  const phoneString = typeof phone === "number" ? phone.toString() : phone;
+
+  // Check if the phone number is provided
+  if (!phoneString) {
+    message = "Phone number is required";
+  }
+
+  // Check if the phone number contains only digits
+  const digitRegex = /^\d+$/;
+  if (!digitRegex.test(phoneString)) {
+    message = "Phone number must contain only digits";
+  }
+
+  // Check if the phone number is between 8 and 10 digits
+  if (phoneString.length < 8 || phoneString.length > 10) {
+    message = "Phone number must be exactly 8 or 10 digits long";
+  }
+
+  return message;
+}
+
+export function validateWebsiteURL(website, res) {
+  let message = "";
+  // regex pattern for website URL
+  const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/;
+
+  // Validate the website URL against the regex
+  if (!urlRegex.test(website)) {
+    message = "Invalid website URL";
+  }
+
+  return message;
+}
+
+export function validateEstablishedYear(establishedYear) {
+  let message = "";
+  // Check if the value is not empty and is a 4-digit number
+  if (!establishedYear || !/^\d{4}$/.test(establishedYear.trim())) {
+    message = "Established year must be a 4-digit number";
+  }
+
+  // Convert to integer and check if it falls within the valid range
+  const year = parseInt(establishedYear.trim(), 10);
+  const currentYear = new Date().getFullYear();
+  if (year < 1000 || year > currentYear) {
+    message = "Established year must be between 1000 and the current year";
+  }
+
+  return message;
+}
+
+export function validatePostalCode(postalCode) {
+  let message = "";
+
+  // ZIP code (5 digits or 9 digits with a hyphen)
+  const postalCodeRegex = /^[0-9]{5,9}$/;
+  if (!postalCode || !postalCodeRegex.test(postalCode.trim())) {
+    message = "Invalid postal code";
+  }
+
+  return message;
+}
+
+export function validateEmail(email, res) {
+  let message = "";
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (!email || !emailRegex.test(email.trim())) {
+    message = "Invalid email";
+  }
+
+  return message;
+}

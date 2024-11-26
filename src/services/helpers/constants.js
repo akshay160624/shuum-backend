@@ -89,3 +89,10 @@ export const ORGANIZATION_OPTIONS = [
   { value: "BIODIVERSITY_PROTECTION", label: "Biodiversity Protection" },
   { value: "RENEWABLE_HEAT", label: "Renewable Heat" },
 ];
+
+// company table status's
+export const COMPANY_STATUS = [{ value: CLAIMED }, { value: UNCLAIMED }];
+
+// S3 bucket folder names
+export const companyS3BucketFolderName = "company";
+export const companyExcelFileS3BucketFolderName = "company-excel";

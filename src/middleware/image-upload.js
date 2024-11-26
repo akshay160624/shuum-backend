@@ -4,6 +4,8 @@ import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST } from "../services/helpers/status-code.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import { S3Client } from "@aws-sdk/client-s3";
+import { companyS3BucketFolderName } from "../services/helpers/constants.js";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
   region: process.env.S3_BUCKET_REGION,
@@ -26,7 +28,7 @@ export const uploadCompanyS3Image = multer({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
     destination: (req, file, cb) => {
-      const folderpath = "company";
+      const folderpath = companyS3BucketFolderName;
       cb(null, folderpath);
     },
     contentType: multerS3.AUTO_CONTENT_TYPE,
@@ -36,7 +38,7 @@ export const uploadCompanyS3Image = multer({
 
     key: function (req, file, cb) {
       // const foldername = req.headers.foldername;
-      const foldername = "company";
+      const foldername = companyS3BucketFolderName;
       // if (!foldername) {
       //   return cb(new Error("Please provide a bucket folder name"));
       // }
@@ -92,15 +94,15 @@ export const validMulterUploadMiddleware = (multerUploadFunction) => {
     });
 };
 
-export const deleteFileFromS3 = (key, foldername, next) => {
-  const constantParams = {
-    Bucket: process.env.S3_BUCKET_NAME + "/" + foldername,
-  };
+export const deleteFileFromS3 = async (key, foldername) => {
   const deleteParams = {
-    Key: key,
-    ...constantParams,
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: `${foldername}/${key}`,
   };
-  s3.deleteObject(deleteParams, (error, data) => {
-    next(error, data);
-  });
+  try {
+    const data = await s3.send(new DeleteObjectCommand(deleteParams));
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error deleting file from S3:", error);
+  }
 };
