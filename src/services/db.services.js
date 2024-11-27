@@ -26,33 +26,33 @@ export const fetchUser = async () => {
 
 // insert new user in db
 export const registerAuthUser = async (email, otp = null, otpExpires = null) => {
-  const userExist = await fetchOneFromDb(USER_TABLE, { email: email.toLowerCase().trim() });
-  if (!userExist) {
-    // create user insert data
-    const userData = {
-      user_id: uuidv4(),
-      email: email.toLowerCase().trim(),
-      name: "",
-      otp: otp,
-      otp_expiry: otpExpires,
-      profile_details: {
-        role: "",
-        about_me: "",
-        looking_for: "",
-        profile_keywords: [],
-        organization: "",
-        linkedin_url: "",
-      },
-      socials: [],
-      password: "",
-      email_verified: true,
-      signup_completed: true,
-      onboarding_steps: "",
-      status: INACTIVE,
-      ...timestamp,
-    };
+  // create user insert data
+  const userData = {
+    user_id: uuidv4(),
+    email: email.toLowerCase().trim(),
+    name: "",
+    otp: otp,
+    otp_expiry: otpExpires,
+    profile_details: {
+      role: "",
+      about_me: "",
+      looking_for: "",
+      profile_keywords: [],
+      organization: "",
+      linkedin_url: "",
+    },
+    socials: [],
+    password: "",
+    email_verified: true,
+    signup_completed: true,
+    onboarding_steps: "",
+    status: INACTIVE,
+    ...timestamp,
+  };
 
-    // insert into the database
-    return await insertOneToDb(USER_TABLE, userData);
-  }
+  // insert into the database
+  await insertOneToDb(USER_TABLE, userData);
+
+  // fetch inserted user data
+  return await fetchOneFromDb(USER_TABLE, { user_id: userData.user_id });
 };

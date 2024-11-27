@@ -1,20 +1,35 @@
 import { registerAuthUser } from "../services/db.services.js";
+import { USER_TABLE } from "../services/helpers/db-tables.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { ERROR, FORBIDDEN, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
+import { ERROR, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
+import { fetchOneFromDb } from "../services/mongodb.js";
+import { createJwtToken } from "../services/utility.js";
 
 export const callbackNav = async (req, res) => {
   try {
     const { access_token: accessToken, ...userData } = req.user;
 
-    const responseData = {
-      user: userData, // Will contain the Google user profile
-      token: accessToken,
-    };
+    let token = "";
+    const userExist = await fetchOneFromDb(USER_TABLE, { email: userData.email.toLowerCase().trim() });
+    if (!userExist) {
+      // register user if not registered
+      const registeredUser = await registerAuthUser(userData.email);
+      token = await createJwtToken(registeredUser);
+    } else {
+      token = await createJwtToken(userExist);
+    }
 
-    // register user if not registered
-    await registerAuthUser(userData.email);
+    // set jwt token in cookies
+    await res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT_NAME === "PROD",
+      maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year in milliseconds
+      // maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
 
-    return responseHelper.success(res, "Successfully logged in with Google", SUCCESS, responseData);
+    // redirect to client URL
+    return res.redirect(`${process.env.CLIENT_REDIRECTION_URL}`);
+    // return responseHelper.success(res, "Successfully logged in with Google", SUCCESS, responseData);
   } catch (err) {
     console.error("Callback Error:", err.message);
     return responseHelper.error(res, "Error processing login", ERROR);
@@ -33,8 +48,10 @@ export const logout = (req, res) => {
         return responseHelper.error(res, "Failed to clear session", ERROR);
       }
       res.clearCookie("connect.sid"); // Clear session cookie
+      res.clearCookie("jwt"); // Clear jwt cookie
+
       // Redirect to the home page or login page after logout
-      res.redirect("/auth/google"); //TODO: Add client URL process.env.CLIENT_URL
+      res.redirect(`${process.env.CLIENT_URL}`);
     });
   });
 };

@@ -209,6 +209,107 @@
 					"response": []
 				},
 				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "foldername",
+								"value": "company",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "company_id",
+									"value": "8b17fe84-1e10-49cb-b60d-a65ca1d7b7cd",
+									"type": "text"
+								},
+								{
+									"key": "company_name",
+									"value": "Zed",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/C:/Users/Admin/Pictures/unsamples/image-1.jpg"
+								},
+								{
+									"key": "industry",
+									"value": "RENEWABLE_ENERGY",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "232112384",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "sam1@mailinator.com",
+									"type": "text"
+								},
+								{
+									"key": "website",
+									"value": "http://ad.in",
+									"type": "text"
+								},
+								{
+									"key": "established_year",
+									"value": "2004",
+									"type": "text"
+								},
+								{
+									"key": "founder",
+									"value": "AVC",
+									"type": "text"
+								},
+								{
+									"key": "postal_code",
+									"value": "115634",
+									"type": "text"
+								},
+								{
+									"key": "headquarters",
+									"value": "Pheonix, Arizona, USA",
+									"type": "text"
+								},
+								{
+									"key": "key_services",
+									"value": "Nikola Tre BEV: Battery-electric Class 8 truck",
+									"type": "text"
+								},
+								{
+									"key": "focus_area",
+									"value": "Nikola Tre FCEV:",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Nikola Corporation is a designer and manufact",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/company/update",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Insert Excel",
 					"request": {
 						"method": "POST",
@@ -276,21 +377,9 @@
 			"item": [
 				{
 					"name": "Get Onboarding",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
 					"request": {
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/get-onboarding",
 							"host": [
