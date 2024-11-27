@@ -12,6 +12,10 @@ import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import { fetchCompany, updateAuthUser } from "../services/db.services.js";
+import { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+import { registerAuthUser } from "../services/db.services.js";
+
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -185,35 +189,96 @@ export const getOtp = async (req, res) => {
 
 export const passwordLogin = async (req, res) => {
   try {
-    // Validate request
-    const isNotValid = await passwordLoginRequestValidate(req.body);
-    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
-
-    const { email, password } = req.body;
-
-    // validate user
-    const userFilter = {
-      email: email.toLowerCase().trim(),
-      // status: ACTIVE,
-    };
-
-    const userExists = await fetchOneFromDb(USER_TABLE, userFilter);
-    if (isEmpty(userExists)) {
-      return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
-    }
-    if (isEmpty(userExists.password)) {
-      return responseHelper.error(res, `Password is not configured.`, UNAUTHORIZED);
-    }
-
-    const hashPassword = userExists.password;
-    const passwordMatch = await comparePasswords(password, hashPassword);
-    if (passwordMatch) {
-      const responseData = {
-        token: await createJwtToken(userExists),
+    const { platform: loginPlatform = '', code } = req.body;
+    
+    if (loginPlatform === 'google') {
+      const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+      const redirectUri = process.env.CALLBACK_URL;
+      
+      const oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
+      
+      // Function to exchange the authorization code for an access token
+      const getAccessToken = async (authCode) => {
+        const { tokens } = await oauth2Client.getToken(authCode);
+        oauth2Client.setCredentials(tokens); // Set the credentials on the OAuth2 client
+        return tokens;
       };
-      return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
+
+       // Function to fetch user information using the access token
+      const getUserInfo = async () => {
+        const oauth2 = google.oauth2({
+          auth: oauth2Client,
+          version: 'v2',
+        });
+
+        const { data } = await oauth2.userinfo.get();
+        return data; // Return user data
+      };
+
+      try {
+        // Get tokens from the authorization code
+        const tokens = await getAccessToken(code);
+    
+        console.log("Access Token:", tokens.access_token);
+        console.log("ID Token:", tokens.id_token);
+    
+        // Get user information using the tokens
+        const googleUser = await getUserInfo();
+        console.log("Google User Info:", googleUser);
+        
+        if(googleUser) {
+          const { email } = googleUser;
+          let token = "";
+          const userExist = await fetchOneFromDb(USER_TABLE, { email: email.toLowerCase().trim() });
+  
+          if (!userExist) {
+            // register user if not registered
+            const registeredUser = await registerAuthUser(email);
+            token = await createJwtToken(registeredUser);
+          } else {
+            token = await createJwtToken(userExist);
+          }
+          const responseData = {
+            token: token
+          };
+          return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
+        }
+      } catch (error) {
+        console.error("Error processing Google auth code:", error.message);
+        throw error;
+      }
     } else {
-      return responseHelper.error(res, "Invalid password. Please try again.", UNAUTHORIZED);
+      // Validate request
+      const isNotValid = await passwordLoginRequestValidate(req.body);
+      if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+      const { email, password } = req.body;
+
+      // validate user
+      const userFilter = {
+        email: email.toLowerCase().trim(),
+        // status: ACTIVE,
+      };
+
+      const userExists = await fetchOneFromDb(USER_TABLE, userFilter);
+      if (isEmpty(userExists)) {
+        return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
+      }
+      if (isEmpty(userExists.password)) {
+        return responseHelper.error(res, `Password is not configured.`, UNAUTHORIZED);
+      }
+
+      const hashPassword = userExists.password;
+      const passwordMatch = await comparePasswords(password, hashPassword);
+      if (passwordMatch) {
+        const responseData = {
+          token: await createJwtToken(userExists),
+        };
+        return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
+      } else {
+        return responseHelper.error(res, "Invalid password. Please try again.", UNAUTHORIZED);
+      }
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);
