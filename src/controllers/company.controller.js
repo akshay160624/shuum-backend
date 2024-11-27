@@ -123,6 +123,11 @@ export const companyList = async (req, res) => {
         },
       },
       {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
         $group: {
           _id: "$company_id",
           company_id: {
