@@ -3,6 +3,7 @@ import Joi from "joi";
 export const companyInsertRequestValidate = async (req, res) => {
   const schema = Joi.object({
     company_name: Joi.string().required(),
+    email: Joi.string().required().email(),
   }).unknown(true);
   const { error } = schema.validate(req);
   if (error) {

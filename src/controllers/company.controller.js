@@ -27,7 +27,20 @@ export const addCompany = async (req, res) => {
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
     const { user } = req;
-    const { company_name: companyName = "", industry: industry = "" } = req.body;
+    const {
+      company_name: companyName = "",
+      email = "",
+      phone = "",
+      industry: industry = "",
+      founder = "",
+      established_year: establishedYear = "",
+      website = "",
+      headquarters = "",
+      focus_area: focusArea = "",
+      description = "",
+      postal_code: postalCode = null,
+      key_services: keyServices = [],
+    } = req.body;
 
     // industry available then validate
     if (!isEmpty(industry)) {
@@ -36,6 +49,51 @@ export const addCompany = async (req, res) => {
         return responseHelper.error(res, "Invalid industry value", BAD_REQUEST);
       }
     }
+
+    if (!isEmpty(phone)) {
+      const validationResult = validatePhoneNumber(phone);
+      if (!isEmpty(validationResult)) {
+        return responseHelper.error(res, validationResult, BAD_REQUEST);
+      }
+    }
+
+    if (!isEmpty(establishedYear)) {
+      // validate established year
+      const validEstablishedYearResult = validateEstablishedYear(establishedYear);
+      if (!isEmpty(validEstablishedYearResult)) {
+        return responseHelper.error(res, validEstablishedYearResult, BAD_REQUEST);
+      }
+    }
+
+    if (!isEmpty(website)) {
+      // validate website
+      const validUrlResult = validateWebsiteURL(website);
+      if (!isEmpty(validUrlResult)) {
+        return responseHelper.error(res, validUrlResult, BAD_REQUEST);
+      }
+    }
+
+    let keyServicesUppercase = [];
+    if (!isEmpty(keyServices)) {
+      if (Array.isArray(keyServices) && keyServices.every((item) => typeof item === "string")) {
+        // Convert all keywords to uppercase
+        keyServicesUppercase = keyServices.map((keyword) => keyword.toUpperCase());
+      } else {
+        return responseHelper.error(res, "Key services must be an array of strings", BAD_REQUEST);
+      }
+    }
+
+    if (!isEmpty(postalCode)) {
+      // validate postal code year
+      const validPostalCodeResult = validatePostalCode(postalCode);
+      if (!isEmpty(validPostalCodeResult)) {
+        return responseHelper.error(res, validPostalCodeResult, BAD_REQUEST);
+      }
+    }
+
+    const emailFilter = { email: email.toLowerCase().trim() };
+    const emailExist = await fetchCompany(emailFilter);
+    if (!isEmpty(emailExist)) return responseHelper.error(res, `Email already exists!`, BAD_REQUEST);
 
     const companyFilter = {
       company_name: {
@@ -51,17 +109,17 @@ export const addCompany = async (req, res) => {
     const companyDetails = {
       company_id: uuidv4(),
       company_name: companyName.trim(),
-      email: "",
-      phone: "",
-      website: "",
-      established_year: "",
-      founder: "",
-      postal_code: "",
-      headquarters: "",
+      email: email,
+      phone: phone,
+      website: website.trim(),
+      established_year: establishedYear.trim(),
+      founder: founder.trim(),
+      postal_code: postalCode,
+      headquarters: headquarters,
       industry: industry ? industry.toUpperCase().trim() : "",
-      key_services: "",
-      focus_area: "",
-      description: "",
+      key_services: keyServicesUppercase,
+      focus_area: focusArea.trim(),
+      description: description.trim(),
       image_url: location,
       image_name: fileName,
       status: UNCLAIMED,
@@ -343,7 +401,7 @@ export const updateCompany = async (req, res) => {
       postal_code: postalCode,
       headquarters,
       industry: industry = "",
-      key_services: keyServices,
+      key_services: keyServices = [],
       focus_area: focusArea,
       description,
       status,
@@ -427,17 +485,18 @@ export const updateCompany = async (req, res) => {
       companyUpdateData.industry = industry.toUpperCase().trim();
     }
 
-    if (!isEmpty(keyServices)) companyUpdateData.key_services = keyServices.trim();
+    if (!isEmpty(keyServices)) {
+      if (Array.isArray(keyServices) && keyServices.every((item) => typeof item === "string")) {
+        // Convert all keywords to uppercase
+        companyUpdateData.key_services = keyServices.map((keyword) => keyword.toUpperCase());
+      } else {
+        return responseHelper.error(res, "Key services must be an array of strings", BAD_REQUEST);
+      }
+    }
+
+    // if (!isEmpty(keyServices)) companyUpdateData.key_services = keyServices.trim();
     if (!isEmpty(focusArea)) companyUpdateData.focus_area = focusArea.trim();
     if (!isEmpty(description)) companyUpdateData.description = description.trim();
-
-    if (!isEmpty(location)) {
-      // if have image then delete old image from S3
-      const key = isCompanyExist.image_name;
-      await deleteFileFromS3(key, companyS3BucketFolderName);
-      companyUpdateData.image_url = location;
-      companyUpdateData.image_name = fileName;
-    }
 
     if (!isEmpty(status)) {
       const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
@@ -445,6 +504,14 @@ export const updateCompany = async (req, res) => {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
       }
       companyUpdateData.status = status.toUpperCase().trim();
+    }
+
+    if (!isEmpty(location)) {
+      // if have image then delete old image from S3
+      const key = isCompanyExist.image_name;
+      await deleteFileFromS3(key, companyS3BucketFolderName);
+      companyUpdateData.image_url = location;
+      companyUpdateData.image_name = fileName;
     }
 
     if (Object.keys(companyUpdateData).length > 1) {
@@ -457,6 +524,42 @@ export const updateCompany = async (req, res) => {
       return responseHelper.success(res, "Company details update successfully", SUCCESS);
     } else {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
+    }
+  } catch (err) {
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+export const companyView = async (req, res) => {
+  try {
+    const { company_id: companyId = "" } = req.params;
+
+    if (isEmpty(companyId)) {
+      return responseHelper.error(res, "company_id is required", BAD_REQUEST);
+    }
+
+    const companyDetails = await fetchCompany({ company_id: companyId });
+    if (!isEmpty(companyDetails)) {
+      const responseData = {
+        company_id: companyDetails.company_id,
+        company_name: companyDetails.company_name,
+        email: companyDetails.email,
+        phone: companyDetails.phone,
+        website: companyDetails.website,
+        established_year: companyDetails.established_year,
+        founder: companyDetails.founder,
+        postal_code: companyDetails.postal_code,
+        headquarters: companyDetails.headquarters,
+        industry: companyDetails.industry,
+        key_services: companyDetails.key_services,
+        focus_area: companyDetails.focus_area,
+        description: companyDetails.description,
+        image_url: companyDetails.image_url,
+        createdAt: companyDetails.createdAt,
+      };
+      return responseHelper.success(res, "Company details fetched successfully", SUCCESS, responseData);
+    } else {
+      return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);
