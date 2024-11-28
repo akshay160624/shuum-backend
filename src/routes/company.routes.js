@@ -8,7 +8,7 @@ const router = Router();
 
 router.post("/add", verifyUserAuthToken, validMulterUploadMiddleware(uploadCompanyS3Image.single("image")), addCompany);
 router.get("/list", companyList);
-router.get("/view/:company_id", companyView);
+router.get("/view/:company_id", verifyUserAuthToken, companyView);
 router.post("/insert", validMulterUploadMiddleware(uploadS3File.single("file")), importCompanies);
 router.put("/update", verifyUserAuthToken, validMulterUploadMiddleware(uploadCompanyS3Image.single("image")), updateCompany);
 
