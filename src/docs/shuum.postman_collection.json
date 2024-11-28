@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "df31d7f0-2167-4d07-a499-1015d280528c",
+		"_postman_id": "789587f4-b6ad-480f-87cf-c82b3c4c9e73",
 		"name": "Shuum",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "26749233"
@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay12345.mailinator@mailinator.com\"\r\n}",
+							"raw": "{\r\n    // normal request\r\n    // \"email\": \"akshay12345.mailinator@mailinator.com\"\r\n\r\n    // google request\r\n    \"code\": \"4/0AeanS0bnqAN6B4MLKFG0bwd5qsNfMrnMg4VbZNFFtLrmA-vWxLvPjFV5olSmKstlNKqUlw\",\r\n    \"platform\": \"google\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -108,7 +108,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\":\"akshay.mailinator@mailinator.com\",\r\n    \"password\": \"123456\"\r\n}",
+							"raw": "{\r\n    // password request\r\n    // \"email\":\"akshay.mailinator@mailinator.com\",\r\n    // \"password\": \"123456\"\r\n\r\n    // google request\r\n    \"code\": \"4/0AeanS0bnqAN6B4MLKFG0bwd5qsNfMrnMg4VbZNFFtLrmA-vWxLvPjFV5olSmKstlNKqUlw\",\r\n    \"platform\": \"google\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -509,43 +509,6 @@
 								"api",
 								"auth",
 								"update-profile"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Google Auth Browser Route",
-			"item": [
-				{
-					"name": "Signup/Login",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://13.127.14.190:8000/auth/google/logout",
-							"protocol": "http",
-							"host": [
-								"13",
-								"127",
-								"14",
-								"190"
-							],
-							"port": "8000",
-							"path": [
-								"auth",
-								"google",
-								"logout"
 							]
 						}
 					},

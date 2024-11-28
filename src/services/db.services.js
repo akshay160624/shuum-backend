@@ -20,8 +20,8 @@ export const updateAuthUser = async (userExist, otp, otpExpires) => {
   return await updateOneToDb(USER_TABLE, { user_id: userExist.user_id }, userUpdateData);
 };
 
-export const fetchUser = async () => {
-  return;
+export const fetchUser = async (filter) => {
+  return await fetchOneFromDb(USER_TABLE, filter);
 };
 
 // insert new user in db

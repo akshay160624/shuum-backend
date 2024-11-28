@@ -11,10 +11,9 @@ import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany, updateAuthUser } from "../services/db.services.js";
-import { OAuth2Client } from "google-auth-library";
-import { google } from "googleapis";
+import { fetchCompany, fetchUser, updateAuthUser } from "../services/db.services.js";
 import { registerAuthUser } from "../services/db.services.js";
+import { getGoogleUserInfo } from "../services/google-auth.services.js";
 
 const { isEmpty } = lodash;
 
@@ -24,69 +23,94 @@ const __dirname = path.dirname(__filename);
 // get-otp for register
 export const register = async (req, res) => {
   try {
-    // Validate request
-    const isNotValid = await registerUserRequestValidate(req.body);
-    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
-
-    const { email } = req.body;
-
-    const userFilter = {
-      email: email.toLowerCase().trim(),
-      //   status: INACTIVE,
-    };
-
-    // check user exist in db
-    const userExist = await fetchOneFromDb(USER_TABLE, userFilter);
-
-    // validate signup is completed
-    if (userExist?.signup_completed === true) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
-
-    // generate random 6 digit otp
-    const { otp, otpExpires } = generateOtpWithExpiry();
-
-    // generate email template
-    const locals = { otp: otp };
-    const emailBody = await ejs.renderFile(path.join(__dirname, "../views/emails/auth", "email-verify.ejs"), { locals: locals });
-
-    //sending email to user
-    await sendEmail(email, emailBody, "Verify-Otp");
-
-    let userSaved = false;
-    if (userExist?.signup_completed === false) {
-      userSaved = await updateAuthUser(userExist, otp, otpExpires);
+    const { platform: loginPlatform = "", code = "" } = req.body;
+    if (loginPlatform && loginPlatform.toLowerCase() === "google") {
+      try {
+        // Get user information using code tokens
+        const googleUser = await getGoogleUserInfo(code.trim());
+        if (!isEmpty(googleUser)) {
+          const { email } = googleUser;
+          const userExist = await fetchUser({ email: email.toLowerCase().trim() });
+          if (isEmpty(userExist)) {
+            // register user if not registered
+            const registeredUser = await registerAuthUser(email);
+            const responseData = {
+              token: await createJwtToken(registeredUser),
+            };
+            return responseHelper.success(res, "Signup successful", SUCCESS, responseData);
+          } else {
+            return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
+          }
+        }
+      } catch (err) {
+        console.error("Error processing Google auth code:", err.message);
+        return responseHelper.error(res, err.message, ERROR);
+      }
     } else {
-      // create user insert data
-      const userData = {
-        user_id: uuidv4(),
+      // Validate request
+      const isNotValid = await registerUserRequestValidate(req.body);
+      if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+      const { email } = req.body;
+
+      const userFilter = {
         email: email.toLowerCase().trim(),
-        name: "",
-        otp: otp,
-        otp_expiry: otpExpires,
-        profile_details: {
-          role: "",
-          about_me: "",
-          looking_for: "",
-          profile_keywords: [],
-          organization: "",
-          linkedin_url: "",
-        },
-        socials: [],
-        password: "",
-        email_verified: false,
-        signup_completed: false,
-        onboarding_steps: "",
-        status: INACTIVE,
-        ...timestamp,
+        //   status: INACTIVE,
       };
 
-      // insert into the database
-      userSaved = await insertOneToDb(USER_TABLE, userData);
-    }
+      // check user exist in db
+      const userExist = await fetchOneFromDb(USER_TABLE, userFilter);
 
-    if (userSaved) {
-      return responseHelper.success(res, EMAIL_SENT, SUCCESS);
-    } else {
-      return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
+      // validate signup is completed
+      if (userExist?.signup_completed === true) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
+
+      // generate random 6 digit otp
+      const { otp, otpExpires } = generateOtpWithExpiry();
+
+      // generate email template
+      const locals = { otp: otp };
+      const emailBody = await ejs.renderFile(path.join(__dirname, "../views/emails/auth", "email-verify.ejs"), { locals: locals });
+
+      //sending email to user
+      await sendEmail(email, emailBody, "Verify-Otp");
+
+      let userSaved = false;
+      if (userExist?.signup_completed === false) {
+        userSaved = await updateAuthUser(userExist, otp, otpExpires);
+      } else {
+        // create user insert data
+        const userData = {
+          user_id: uuidv4(),
+          email: email.toLowerCase().trim(),
+          name: "",
+          otp: otp,
+          otp_expiry: otpExpires,
+          profile_details: {
+            role: "",
+            about_me: "",
+            looking_for: "",
+            profile_keywords: [],
+            organization: "",
+            linkedin_url: "",
+          },
+          socials: [],
+          password: "",
+          email_verified: false,
+          signup_completed: false,
+          onboarding_steps: "",
+          status: INACTIVE,
+          ...timestamp,
+        };
+
+        // insert into the database
+        userSaved = await insertOneToDb(USER_TABLE, userData);
+      }
+
+      if (userSaved) {
+        return responseHelper.success(res, EMAIL_SENT, SUCCESS);
+      } else {
+        return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
+      }
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);
@@ -189,64 +213,28 @@ export const getOtp = async (req, res) => {
 
 export const passwordLogin = async (req, res) => {
   try {
-    const { platform: loginPlatform = '', code } = req.body;
-    
-    if (loginPlatform === 'google') {
-      const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
-      const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
-      const redirectUri = process.env.CALLBACK_URL;
-      
-      const oauth2Client = new OAuth2Client(clientId, clientSecret, redirectUri);
-      
-      // Function to exchange the authorization code for an access token
-      const getAccessToken = async (authCode) => {
-        const { tokens } = await oauth2Client.getToken(authCode);
-        oauth2Client.setCredentials(tokens); // Set the credentials on the OAuth2 client
-        return tokens;
-      };
+    const { platform: loginPlatform = "", code = "" } = req.body;
 
-       // Function to fetch user information using the access token
-      const getUserInfo = async () => {
-        const oauth2 = google.oauth2({
-          auth: oauth2Client,
-          version: 'v2',
-        });
-
-        const { data } = await oauth2.userinfo.get();
-        return data; // Return user data
-      };
-
+    if (loginPlatform && loginPlatform.toLowerCase() === "google") {
       try {
-        // Get tokens from the authorization code
-        const tokens = await getAccessToken(code);
-    
-        console.log("Access Token:", tokens.access_token);
-        console.log("ID Token:", tokens.id_token);
-    
-        // Get user information using the tokens
-        const googleUser = await getUserInfo();
-        console.log("Google User Info:", googleUser);
-        
-        if(googleUser) {
+        // Get user information using the set tokens
+        const googleUser = await getGoogleUserInfo(code.trim());
+        if (!isEmpty(googleUser)) {
           const { email } = googleUser;
-          let token = "";
-          const userExist = await fetchOneFromDb(USER_TABLE, { email: email.toLowerCase().trim() });
-  
-          if (!userExist) {
-            // register user if not registered
-            const registeredUser = await registerAuthUser(email);
-            token = await createJwtToken(registeredUser);
+          const userExist = await fetchUser({ email: email.toLowerCase().trim() });
+          if (!isEmpty(userExist)) {
+            // generate token if user exist
+            const responseData = {
+              token: await createJwtToken(userExist),
+            };
+            return responseHelper.success(res, "Login successful", SUCCESS, responseData);
           } else {
-            token = await createJwtToken(userExist);
+            return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
           }
-          const responseData = {
-            token: token
-          };
-          return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
         }
-      } catch (error) {
-        console.error("Error processing Google auth code:", error.message);
-        throw error;
+      } catch (err) {
+        console.error("Error processing Google auth code:", err.message);
+        return responseHelper.error(res, err.message, ERROR);
       }
     } else {
       // Validate request
@@ -471,4 +459,3 @@ export const getOnboardingSteps = async (req, res) => {
     return responseHelper.error(res, err.message, ERROR);
   }
 };
-

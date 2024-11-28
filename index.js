@@ -55,5 +55,5 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", userAuth);
-app.use("/api/company", company);
 app.use("/auth", googleAuth); // google Oauth
+app.use("/api/company", company);
