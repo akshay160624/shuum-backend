@@ -83,6 +83,10 @@ export const addCompany = async (req, res) => {
       }
     }
 
+    if (!isEmpty(description) && description.length > 250) {
+      return responseHelper.error(res, "Description must not exceed 250 characters", BAD_REQUEST);
+    }
+
     if (!isEmpty(postalCode)) {
       // validate postal code year
       const validPostalCodeResult = validatePostalCode(postalCode);
@@ -496,7 +500,12 @@ export const updateCompany = async (req, res) => {
 
     // if (!isEmpty(keyServices)) companyUpdateData.key_services = keyServices.trim();
     if (!isEmpty(focusArea)) companyUpdateData.focus_area = focusArea.trim();
-    if (!isEmpty(description)) companyUpdateData.description = description.trim();
+    if (!isEmpty(description)) {
+      if (description.length > 250) {
+        return responseHelper.error(res, "Description must not exceed 250 characters", BAD_REQUEST);
+      }
+      companyUpdateData.description = description.trim();
+    }
 
     if (!isEmpty(status)) {
       const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
