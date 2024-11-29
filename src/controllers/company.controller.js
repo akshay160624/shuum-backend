@@ -568,7 +568,7 @@ export const companyView = async (req, res) => {
       };
       return responseHelper.success(res, "Company details fetched successfully", SUCCESS, responseData);
     } else {
-      return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
+      return responseHelper.error(res, `No company found!`, NOT_FOUND);
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);

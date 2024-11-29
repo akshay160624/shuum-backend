@@ -105,3 +105,13 @@ export const COMPANY_STATUS = [{ value: CLAIMED }, { value: UNCLAIMED }];
 // S3 bucket folder names
 export const companyS3BucketFolderName = "company";
 export const companyExcelFileS3BucketFolderName = "company-excel";
+
+// Introduction types
+export const TARGET = "TARGET";
+export const GENERAL = "GENERAL";
+
+// Introduction status
+export const PENDING = "PENDING";
+export const WITHDRAW = "WITHDRAW";
+export const ACCEPTED = "ACCEPTED";
+export const DENIED = "DENIED";

@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import userAuth from "./src/routes/auth.routes.js";
 import company from "./src/routes/company.routes.js";
 import googleAuth from "./src/routes/google-auth.routes.js";
+import introduction from "./src/routes/introduction.routes.js";
 
 const PORT = process.env.PORT || 8000;
 
@@ -57,3 +58,4 @@ app.get("/", (req, res) => {
 app.use("/api/auth", userAuth);
 app.use("/auth", googleAuth); // google Oauth
 app.use("/api/company", company);
+app.use("/api/introduction", introduction);

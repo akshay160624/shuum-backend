@@ -1,5 +1,5 @@
 import { INACTIVE, timestamp } from "./helpers/constants.js";
-import { COMPANY_TABLE, USER_TABLE } from "./helpers/db-tables.js";
+import { COMPANY_TABLE, INTRODUCTION_TABLE, USER_TABLE } from "./helpers/db-tables.js";
 import { fetchOneFromDb, insertOneToDb, updateOneToDb } from "./mongodb.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -55,4 +55,8 @@ export const registerAuthUser = async (email, otp = null, otpExpires = null) => 
 
   // fetch inserted user data
   return await fetchOneFromDb(USER_TABLE, { user_id: userData.user_id });
+};
+
+export const fetchIntroduction = async (filter) => {
+  return await fetchOneFromDb(INTRODUCTION_TABLE, filter);
 };
