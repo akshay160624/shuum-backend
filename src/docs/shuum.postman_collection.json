@@ -108,7 +108,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    // password request\r\n    // \"email\":\"akshay.mailinator@mailinator.com\",\r\n    // \"password\": \"123456\"\r\n\r\n    // google request\r\n    \"code\": \"4/0AeanS0bnqAN6B4MLKFG0bwd5qsNfMrnMg4VbZNFFtLrmA-vWxLvPjFV5olSmKstlNKqUlw\",\r\n    \"platform\": \"google\"\r\n}",
+							"raw": "{\r\n    // password request\r\n    \"email\":\"akshay1.mailinator@mailinator.com\",\r\n    \"password\": \"123456\"\r\n\r\n    // google request\r\n    // \"code\": \"4/0AeanS0YKce88lWbVotyoNS12p0ty6CZhB34AoLPYln75LRUSL-G0fsjxvuXIEeNNk3r3eA\",\r\n    // \"platform\": \"google\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -180,16 +180,71 @@
 								{
 									"key": "image",
 									"type": "file",
-									"src": "/C:/Users/Admin/Pictures/unsamples/image-7.jpg"
+									"src": "/C:/Users/Admin/Pictures/unsamples/image-3.jpg"
 								},
 								{
 									"key": "company_name",
-									"value": "Zed",
+									"value": "ZeddZqaa",
 									"type": "text"
 								},
 								{
 									"key": "industry",
 									"value": "RENEWABLE_ENERGY",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "company+01@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "8844556611",
+									"type": "text"
+								},
+								{
+									"key": "founder",
+									"value": "ere",
+									"type": "text"
+								},
+								{
+									"key": "established_year",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "website",
+									"value": "google.com",
+									"type": "text"
+								},
+								{
+									"key": "headquarters",
+									"value": "fd",
+									"type": "text"
+								},
+								{
+									"key": "key_services",
+									"value": "XYZ",
+									"type": "text"
+								},
+								{
+									"key": "key_services",
+									"value": "ABC",
+									"type": "text"
+								},
+								{
+									"key": "focus_area",
+									"value": "sdfd",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "OWFyEZ4iXMYUtg6sbuxYMeTcCEkQhYh68fef3Dc87OpdYmaZUwf4yOhNrJAckRSU0as34E5YDYOyC2uaC4VoWdzepEnuYVMiAlQL3UpyK7r1oh7BWbK3plSraud79WWWEDJJ3IwzsbKyGJBhRnpmk1LbGag8UXpyNN5qBhNbAZbbqBGMf27ICCj58ZIFy1dCHlEIhIA5aL4ch3xoWrmHEOARZxwmF8z8ebcDR2qa8EsSZupSxrcJ8enCst",
+									"type": "text"
+								},
+								{
+									"key": "postal_code",
+									"value": "563214",
 									"type": "text"
 								}
 							]
@@ -369,6 +424,33 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "View",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/company/view/818f9868-5cc8-4630-93f9-64da88a35f54",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"company",
+								"view",
+								"818f9868-5cc8-4630-93f9-64da88a35f54"
+							],
+							"query": [
+								{
+									"key": "search_text",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -465,6 +547,7 @@
 								{
 									"key": "profile_keywords[0]",
 									"value": "CLEAN_TECHNOLOGY",
+									"description": "// below are the options \nCHARGING_SOLUTIONS\nDECARBONIZATION\nWATER_TREATMENTS\nELECTRICAL_INFRASTRUCTURE\nSMART_METERING",
 									"type": "text"
 								},
 								{
@@ -509,6 +592,148 @@
 								"api",
 								"auth",
 								"update-profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Introduction",
+			"item": [
+				{
+					"name": "Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    // GENERAL field\r\n    \"introduction_type\": \"TARGET\",\r\n    \"company_id\": \"6837632a-a1f7-40c8-a1fc-dd3e58a3bd7c\",\r\n\r\n    // TARGET field\r\n    // \"introduction_type\": \"GENERAL\",\r\n    // \"value_offer\": \"sds\",\r\n\r\n    // Required fields\r\n    \"purpose\": \"fdstretadfe66\",\r\n    \"introduction_medium\": \"asdtretad66\",\r\n    \"elaborate_purpose\": \"easdrertrew66\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/introduction/request",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"introduction",
+								"request"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/introduction/list?introduction_filter=COMPANY",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"introduction",
+								"list"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACCEPTED",
+									"disabled": true
+								},
+								{
+									"key": "introduction_filter",
+									"value": "COMPANY",
+									"description": "INDIVIDUAL, COMPANY"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "View",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/introduction/list?introduction_filter=COMPANY",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"introduction",
+								"list"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACCEPTED",
+									"disabled": true
+								},
+								{
+									"key": "introduction_filter",
+									"value": "COMPANY",
+									"description": "INDIVIDUAL, COMPANY"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/introduction/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"introduction",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"introduction_id\": \"bdf43d04-f480-429c-8c50-4c877d27705f\",\r\n    \"status\": \"PENDING\" // PENDING, WITHDRAW, ACCEPTED, DENIED\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/introduction/update",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"introduction",
+								"update"
 							]
 						}
 					},
