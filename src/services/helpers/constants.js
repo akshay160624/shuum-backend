@@ -115,3 +115,4 @@ export const PENDING = "PENDING";
 export const WITHDRAW = "WITHDRAW";
 export const ACCEPTED = "ACCEPTED";
 export const DENIED = "DENIED";
+export const COMPLETED = "COMPLETED";

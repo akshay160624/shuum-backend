@@ -1,4 +1,4 @@
-import { ACCEPTED, DENIED, GENERAL, PENDING, TARGET, timestamp, WITHDRAW } from "../services/helpers/constants.js";
+import { ACCEPTED, COMPLETED, DENIED, GENERAL, PENDING, TARGET, timestamp, WITHDRAW } from "../services/helpers/constants.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { aggregateFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
@@ -9,7 +9,7 @@ import { INTRODUCTION_TABLE } from "../services/helpers/db-tables.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import { fetchCompany, fetchIntroduction } from "../services/db.services.js";
 const { isEmpty, pick, isEqual } = lodash;
-const INTRODUCTION_STATUS = [PENDING, WITHDRAW, ACCEPTED, DENIED];
+const INTRODUCTION_STATUS = [PENDING, WITHDRAW, ACCEPTED, DENIED, COMPLETED];
 const INTRODUCTION_FILTERS = ["INDIVIDUAL", "COMPANY"];
 
 // Request introduction

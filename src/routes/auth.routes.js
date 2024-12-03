@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getOnboardingSteps, getOtp, passwordLogin, register, updateUserInfo, updateUserProfile, verifyOtp } from "../controllers/auth.controller.js";
+import { getOnboardingSteps, getOtp, getProfile, passwordLogin, register, updateUserInfo, updateUserProfile, verifyOtp } from "../controllers/auth.controller.js";
 import { verifyUserAuthToken } from "../middleware/verify-token.js";
 import { uploadUserProfileS3Image, validMulterUploadMiddleware } from "../middleware/image-upload.js";
 
@@ -12,6 +12,6 @@ router.post("/login", passwordLogin); // password login API
 router.post("/update-info", verifyUserAuthToken, updateUserInfo); // update basic details
 router.post("/update-profile", verifyUserAuthToken, validMulterUploadMiddleware(uploadUserProfileS3Image.single("image")), updateUserProfile); // update profile with image required
 router.get("/get-onboarding", verifyUserAuthToken, getOnboardingSteps);
-
+router.get("/profile", verifyUserAuthToken, getProfile);
 
 export default router;

@@ -1,9 +1,9 @@
 import { getOtpRequestValidate, passwordLoginRequestValidate, registerUserRequestValidate, updateProfileRequestValidate, verifyOtpRequestValidate } from "../services/validations/auth.validations.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
-import { COMPANY_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
-import { CLAIMED, INACTIVE, PROFILE_KEYWORDS_OPTIONS, ROLE_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
-import { fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
+import { COMPANY_TABLE, INTRODUCTION_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
+import { CLAIMED, COMPLETED, INACTIVE, PROFILE_KEYWORDS_OPTIONS, ROLE_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
+import { fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
 import path from "path";
@@ -353,7 +353,7 @@ export const updateUserProfile = async (req, res) => {
       onboarding_steps: onboardingSteps = "",
     } = req.body;
 
-    // TODO: Add organization validation and options
+    // TODO: Add organization options and validation
     // organization available then validate
     // if (!isEmpty(organization)) {
     //   const organizationOption = findOptionByValue(ORGANIZATION_OPTIONS, organization);
@@ -446,16 +446,60 @@ export const updateUserProfile = async (req, res) => {
 
 export const getOnboardingSteps = async (req, res) => {
   try {
+    // Extract the user from the request
     const { user } = req;
+
+    // Validate the user object
     if (isEmpty(user)) return responseHelper.error(res, "Invalid request", BAD_REQUEST);
 
-    const onboardingSteps = await fetchOneFromDb(USER_TABLE, { user_id: user.user_id });
+    // Fetch the user data
+    const userExist = await fetchUser({ user_id: user?.user_id });
+
+    // Check if user exists
+    if (isEmpty(userExist)) return responseHelper.error(res, "User does not exist.", NOT_FOUND);
 
     const responseData = {
-      onboarding_steps: onboardingSteps.onboarding_steps,
+      onboarding_steps: userExist?.onboarding_steps || "",
     };
     return responseHelper.success(res, "Onboarding steps fetched successfully", SUCCESS, responseData);
   } catch (err) {
+    console.error("Error fetching onboarding steps:", err);
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+export const getProfile = async (req, res) => {
+  try {
+    // Extract the user from the request, default to null if not present
+    const { user = null } = req;
+    const userId = user?.user_id || "";
+
+    // Fetch the user data
+    const userExist = await fetchUser({ user_id: userId });
+
+    // Check if user exists
+    if (isEmpty(userExist)) {
+      return responseHelper.error(res, "User does not exist.", NOT_FOUND);
+    }
+
+    // Fetch related company and introductions data
+    const [companyExist, usersIntroductions] = await Promise.all([fetchCompany({ company_id: userExist?.company_id }), fetchAllFromDb(INTRODUCTION_TABLE, { user_id: userId, status: COMPLETED })]);
+
+    // Construct the response data
+    const responseData = {
+      name: userExist?.name || "",
+      profile_url: userExist?.profile_url || "",
+      address: "", //TODO: Add address field
+      role: userExist?.profile_details?.role || "",
+      company_name: companyExist?.company_name || "",
+      introduction_completed: usersIntroductions?.length || 0,
+      pursuit_completed: 0, //TODO: Add pursuit query data
+      active_partners: 0, //TODO: Add active partners query data
+    };
+    return responseHelper.success(res, "User profile fetched successfully", SUCCESS, responseData);
+  } catch (err) {
+    // Handle unexpected errors
+    console.error("Error fetching user profile:", err);
     return responseHelper.error(res, err.message, ERROR);
   }
 };
