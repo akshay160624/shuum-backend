@@ -66,56 +66,6 @@ export const requestIntroduction = async (req, res) => {
   }
 };
 
-// Update introduction
-export const updateIntroduction = async (req, res) => {
-  try {
-    // Validate request
-    const isNotValid = await updateIntroductionRequestValidate(req.body);
-    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
-
-    const { introduction_id: introductionId = "", status = "" } = req.body;
-
-    const updateIntroductionData = {};
-
-    // TODO: Add additional field to update after confirmation
-    // check introduction exist in db
-    const introductionFilter = { introduction_id: introductionId };
-    const introductionExist = await fetchIntroduction(introductionFilter);
-    if (isEmpty(introductionExist)) return responseHelper.error(res, `Introduction does not exists!`, NOT_FOUND);
-
-    //  check if user have updated any field then update last interaction field
-    if (!isEmpty(updateIntroductionData)) {
-      const existingRecordSubset = pick(introductionExist, Object.keys(updateIntroductionData));
-      const hasChanges = !isEqual(existingRecordSubset, updateIntroductionData);
-      if (hasChanges) {
-        updateIntroductionData.last_interacted = new Date();
-      }
-    }
-
-    //  update status field
-    if (!isEmpty(status)) {
-      if (!INTRODUCTION_STATUS.includes(status.trim())) {
-        return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
-      } else {
-        updateIntroductionData.status = status;
-      }
-    }
-
-    //  update updated timestamp
-    if (!isEmpty(updateIntroductionData)) {
-      updateIntroductionData.updatedAt = new Date();
-    }
-    const introductionUpdated = await updateOneToDb(INTRODUCTION_TABLE, introductionFilter, updateIntroductionData);
-    if (introductionUpdated) {
-      return responseHelper.success(res, "Introduction details update successfully", SUCCESS);
-    } else {
-      return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
-    }
-  } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
-  }
-};
-
 // Introduction list
 export const introductionList = async (req, res) => {
   try {
@@ -126,34 +76,26 @@ export const introductionList = async (req, res) => {
     let { status: status = "", introduction_filter: introductionFilter = "" } = req.query;
     const { user } = req;
 
-    status = status ? status.toUpperCase().trim() : "";
-    introductionFilter = introductionFilter ? introductionFilter.toUpperCase().trim() : "";
-
-    if (!isEmpty(introductionFilter) && !INTRODUCTION_FILTERS.includes(introductionFilter.trim())) {
+    if (typeof introductionFilter !== "string" || (!isEmpty(introductionFilter) && !INTRODUCTION_FILTERS.includes(introductionFilter.toUpperCase().trim()))) {
       return responseHelper.error(res, "Invalid introduction filter", BAD_REQUEST);
     }
 
-    let filter = {};
-    if (user?.user_id) {
-      filter = {
-        user_id: user.user_id,
-      };
-    }
+    introductionFilter = introductionFilter?.toUpperCase().trim() || "";
+
+    let filter = user?.user_id ? { user_id: user.user_id } : {};
 
     // Introduction status filter
-    if (!isEmpty(status) && status !== "ALL") {
+    if (!isEmpty(status) && status.toUpperCase().trim() !== "ALL") {
+      status = status ? status.toUpperCase().trim() : "";
       if (!INTRODUCTION_STATUS.includes(status)) {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
       }
-      filter = { status: status };
+      filter.status = status;
     }
 
     // Introduction type filter for individual and company
     if (!isEmpty(introductionFilter)) {
-      filter = {
-        ...filter,
-        introduction_type: introductionFilter === "INDIVIDUAL" ? GENERAL : TARGET,
-      };
+      filter.introduction_type = introductionFilter === "INDIVIDUAL" ? GENERAL : TARGET;
     }
 
     const introductionListQuery = [
@@ -187,99 +129,6 @@ export const introductionList = async (req, res) => {
   }
 };
 
-// Introduction search
-export const introductionSearch = async (req, res) => {
-  try {
-    const { search_text: searchText = "" } = req.query;
-    const searchData = new RegExp(searchText.trim(), "i");
-
-    const { user } = req;
-    let filter = {};
-    if (!isEmpty(searchText)) {
-      filter = {
-        $or: [{ purpose: { $regex: searchData } }, { introduction_medium: { $regex: searchData } }, { elaborate_purpose: { $regex: searchData } }, { value_offer: { $regex: searchData } }],
-      };
-    }
-
-    // query projection
-    const projection = {
-      $project: {
-        _id: 0,
-        introduction_id: 1,
-        company_id: 1,
-        introduction_type: 1,
-        purpose: 1,
-        introduction_medium: 1,
-        elaborate_purpose: 1,
-        value_offer: 1,
-        last_interacted: 1,
-        status: 1,
-      },
-    };
-
-    //  base filter
-    const baseMatch = {
-      user_id: user?.user_id,
-    };
-
-    // recent interacted query
-    const recentInteractedQuery = [
-      {
-        $match: {
-          ...baseMatch,
-          last_interacted: { $ne: null },
-        },
-      },
-      { $sort: { last_interacted: -1 } },
-      { $limit: 5 },
-      projection,
-    ];
-
-    // individual query
-    const individualQuery = [
-      {
-        $match: {
-          ...baseMatch,
-          introduction_type: GENERAL,
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      { $limit: 5 },
-      projection,
-    ];
-
-    // companies query
-    const companiesQuery = [
-      {
-        $match: {
-          ...baseMatch,
-          introduction_type: TARGET,
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      { $limit: 5 },
-      projection,
-    ];
-
-    const recentInteractedResult = await aggregateFromDb(INTRODUCTION_TABLE, recentInteractedQuery);
-    const individualResult = await aggregateFromDb(INTRODUCTION_TABLE, individualQuery);
-    const companiesResult = await aggregateFromDb(INTRODUCTION_TABLE, companiesQuery);
-
-    if (!isEmpty(individualResult) || !isEmpty(companiesResult)) {
-      const responseData = {
-        recent: recentInteractedResult,
-        individual: individualResult,
-        companies: companiesResult,
-      };
-      return responseHelper.success(res, "Introduction records fetched successfully", SUCCESS, responseData);
-    } else {
-      return responseHelper.error(res, "No introduction records found", NOT_FOUND);
-    }
-  } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
-  }
-};
-
 // Introduction view
 export const introductionView = async (req, res) => {
   try {
@@ -305,6 +154,131 @@ export const introductionView = async (req, res) => {
       return responseHelper.success(res, "Introduction details fetched successfully", SUCCESS, responseData);
     } else {
       return responseHelper.error(res, `No introduction found!`, NOT_FOUND);
+    }
+  } catch (err) {
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+// Introduction search
+export const introductionSearch = async (req, res) => {
+  try {
+    const { search_text: searchText = "" } = req.query;
+    const { user } = req;
+
+    // TODO: Implement search functionality
+    // const searchData = new RegExp(searchText.trim(), "i");
+    // let filter = {};
+    // if (!isEmpty(searchText)) {
+    //   filter = {
+    //     $or: [{ purpose: { $regex: searchData } }, { introduction_medium: { $regex: searchData } }, { elaborate_purpose: { $regex: searchData } }, { value_offer: { $regex: searchData } }],
+    //   };
+    // }
+
+    // Construct search filter
+    const searchData = searchText.trim() ? new RegExp(searchText.trim(), "i") : null;
+    const filter = searchData
+      ? {
+          $or: [{ purpose: { $regex: searchData } }, { introduction_medium: { $regex: searchData } }, { elaborate_purpose: { $regex: searchData } }, { value_offer: { $regex: searchData } }],
+        }
+      : {};
+
+    // query projection
+    const projection = {
+      $project: {
+        _id: 0,
+        introduction_id: 1,
+        company_id: 1,
+        introduction_type: 1,
+        purpose: 1,
+        introduction_medium: 1,
+        elaborate_purpose: 1,
+        value_offer: 1,
+        last_interacted: 1,
+        status: 1,
+      },
+    };
+
+    //  base filter
+    const baseMatch = {
+      user_id: user?.user_id,
+    };
+
+    // Define queries
+    const buildQuery = (additionalMatch, sortField, limit = 5) => [{ $match: { ...baseMatch, ...additionalMatch } }, { $sort: { [sortField]: -1 } }, { $limit: limit }, projection];
+
+    const recentInteractedQuery = buildQuery({ last_interacted: { $ne: null } }, "last_interacted"); // recent interacted query
+    const individualQuery = buildQuery({ introduction_type: GENERAL }, "createdAt"); // individual query
+    const companiesQuery = buildQuery({ introduction_type: TARGET }, "createdAt"); // companies query
+
+    // Execute queries
+    const [recentInteractedResult, individualResult, companiesResult] = await Promise.all([
+      aggregateFromDb(INTRODUCTION_TABLE, recentInteractedQuery),
+      aggregateFromDb(INTRODUCTION_TABLE, individualQuery),
+      aggregateFromDb(INTRODUCTION_TABLE, companiesQuery),
+    ]);
+
+    if (!isEmpty(individualResult) || !isEmpty(companiesResult)) {
+      const responseData = {
+        recent: recentInteractedResult,
+        individual: individualResult,
+        companies: companiesResult,
+      };
+      return responseHelper.success(res, "Introduction records fetched successfully", SUCCESS, responseData);
+    } else {
+      return responseHelper.error(res, "No introduction records found", NOT_FOUND);
+    }
+  } catch (err) {
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+// Update introduction
+export const updateIntroduction = async (req, res) => {
+  try {
+    // Validate request
+    const isNotValid = await updateIntroductionRequestValidate(req.body);
+    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+    let { introduction_id: introductionId = "", status = "" } = req.body;
+
+    // check introduction exist in db
+    const introductionFilter = { introduction_id: introductionId };
+    const introductionExist = await fetchIntroduction(introductionFilter);
+    if (isEmpty(introductionExist)) return responseHelper.error(res, `Introduction does not exists!`, NOT_FOUND);
+
+    // TODO: Add additional field to update after confirmation
+    let updateIntroductionData = {};
+
+    //  check if user have updated any field then update last interaction field
+    if (!isEmpty(updateIntroductionData)) {
+      const existingRecordSubset = pick(introductionExist, Object.keys(updateIntroductionData));
+      const hasChanges = !isEqual(existingRecordSubset, updateIntroductionData);
+
+      if (hasChanges) {
+        updateIntroductionData.last_interacted = new Date();
+      }
+    }
+
+    //  update status field
+    if (!isEmpty(status)) {
+      status = status ? status.toUpperCase().trim() : "";
+      if (!INTRODUCTION_STATUS.includes(status)) {
+        return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
+      } else {
+        updateIntroductionData.status = status;
+      }
+    }
+
+    //  update updated timestamp
+    if (!isEmpty(updateIntroductionData)) {
+      updateIntroductionData.updatedAt = new Date();
+    }
+    const introductionUpdated = await updateOneToDb(INTRODUCTION_TABLE, introductionFilter, updateIntroductionData);
+    if (introductionUpdated) {
+      return responseHelper.success(res, "Introduction details update successfully", SUCCESS);
+    } else {
+      return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }
   } catch (err) {
     return responseHelper.error(res, err.message, ERROR);

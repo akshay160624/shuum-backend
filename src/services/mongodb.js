@@ -33,7 +33,7 @@ export const fetchOneFromDb = async (collectionName = "", filter = {}, project =
   }
 };
 
-export const fetchAllFromDb = async (collectionName = "", filter = {}, project = [], projection = {}, sort = {}, options = { limit: 0, skip: 0 }) => {
+export const fetchAllFromDb = async (collectionName = "", filter = {}, project = {}, sort = {}, options = { limit: 0, skip: 0 }) => {
   try {
     if (!connection) {
       await getMongodbClient();
@@ -93,6 +93,32 @@ export const insertManyToDb = async (collectionName = "", data = []) => {
     }
     const collection = await connection.db.collection(collectionName);
     const result = await collection.insertMany(data);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteOneFromDb = async (collectionName = '', filter = {}) => {
+  try {
+    if (!connection) {
+      await getMongodbClient();
+    }
+    const collection = await connection.db.collection(collectionName);
+    const result = await collection.deleteMany(filter);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateManyToDb = async (collectionName = "", filter = {}, update = {}, options = { multi: true, returnOriginal: false }) => {
+  try {
+    if (!connection) {
+      await getMongodbClient();
+    }
+    const collection = await connection.db.collection(collectionName);
+    const result = await collection.updateMany(filter, { $set: update }, options);
     return result;
   } catch (error) {
     throw error;
