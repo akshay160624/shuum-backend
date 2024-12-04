@@ -226,6 +226,7 @@ export const passwordLogin = async (req, res) => {
             // generate token if user exist
             const responseData = {
               token: await createJwtToken(userExist),
+              onboarding_steps: userExist?.onboarding_steps || "",
             };
             return responseHelper.success(res, "Login successful", SUCCESS, responseData);
           } else {
@@ -262,6 +263,7 @@ export const passwordLogin = async (req, res) => {
       if (passwordMatch) {
         const responseData = {
           token: await createJwtToken(userExists),
+          onboarding_steps: userExists?.onboarding_steps || "",
         };
         return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
       } else {
