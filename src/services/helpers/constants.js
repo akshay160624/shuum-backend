@@ -1,4 +1,4 @@
-// db document status's
+// db table common status's
 export const ACTIVE = "ACTIVE";
 export const INACTIVE = "INACTIVE";
 export const UNCLAIMED = "UNCLAIMED";
@@ -10,12 +10,21 @@ export const timestamp = {
   updatedAt: new Date(),
 };
 
+// ------------S3 bucket folder names START------------
+export const companyS3BucketFolderName = "company";
+export const companyExcelFileS3BucketFolderName = "company-excel";
+// ------------S3 bucket folder names END------------
+
+// ------------DROPDOWNS START------------
 // company 2 "role" dropdown options
 export const ROLE_OPTIONS = [
   { value: "BUSINESS_DEVELOPMENT_&_SALES", label: "Business Development & Sales" },
   { value: "CONSULTING_&_ADVISORY", label: "Consulting & Advisory" },
   { value: "INVESTMENTS_&_FINANCING", label: "Investments & Financing" },
 ];
+
+// company table status's
+export const COMPANY_STATUS = [{ value: CLAIMED }, { value: UNCLAIMED }];
 
 // company 5 "industry" dropdown options
 export const INDUSTRY_OPTIONS = [
@@ -98,21 +107,25 @@ export const ORGANIZATION_OPTIONS = [
   { value: "BIODIVERSITY_PROTECTION", label: "Biodiversity Protection" },
   { value: "RENEWABLE_HEAT", label: "Renewable Heat" },
 ];
+// ------------DROPDOWNS END------------
 
-// company table status's
-export const COMPANY_STATUS = [{ value: CLAIMED }, { value: UNCLAIMED }];
-
-// S3 bucket folder names
-export const companyS3BucketFolderName = "company";
-export const companyExcelFileS3BucketFolderName = "company-excel";
-
-// Introduction types
+// ------------ MODULE TYPE AND STATUS START ------------
+// ------Introduction types START------
 export const TARGET = "TARGET";
 export const GENERAL = "GENERAL";
+// ------Introduction types END------
 
-// Introduction status
-export const PENDING = "PENDING";
-export const WITHDRAW = "WITHDRAW";
-export const ACCEPTED = "ACCEPTED";
-export const DENIED = "DENIED";
-export const COMPLETED = "COMPLETED";
+// ------Introduction status START------
+export const IntroductionStatus = {
+  PENDING: "PENDING", // Introduction requested
+  WITHDRAW: "WITHDRAW",
+  ACCEPTED: "ACCEPTED",
+  DENIED: "DENIED",
+  COMPLETED: "COMPLETED",
+  MATCHED: "MATCHED",
+};
+export const INTRODUCTION_STATUS = Object.values(IntroductionStatus);
+// ------Introduction status END------
+
+
+// ------------ MODULE TYPE AND STATUS END ------------

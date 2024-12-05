@@ -143,7 +143,7 @@ export const addCompany = async (req, res) => {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }
   } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
+    return responseHelper.error(res, err?.message, ERROR);
   }
 };
 
@@ -319,7 +319,7 @@ export const companyList = async (req, res) => {
       return responseHelper.error(res, "No company found", NOT_FOUND);
     }
   } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
+    return responseHelper.error(res, err?.message, ERROR);
   }
 };
 
@@ -383,7 +383,7 @@ export const importCompanies = async (req, res) => {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }
   } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
+    return responseHelper.error(res, err?.message, ERROR);
   }
 };
 
@@ -535,7 +535,7 @@ export const updateCompany = async (req, res) => {
       return responseHelper.error(res, SOMETHING_WENT_WRONG, ERROR);
     }
   } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
+    return responseHelper.error(res, err?.message, ERROR);
   }
 };
 
@@ -548,29 +548,29 @@ export const companyView = async (req, res) => {
     }
 
     const companyDetails = await fetchCompany({ company_id: companyId });
-    if (!isEmpty(companyDetails)) {
-      const responseData = {
-        company_id: companyDetails.company_id,
-        company_name: companyDetails.company_name,
-        email: companyDetails.email,
-        phone: companyDetails.phone,
-        website: companyDetails.website,
-        established_year: companyDetails.established_year,
-        founder: companyDetails.founder,
-        postal_code: companyDetails.postal_code,
-        headquarters: companyDetails.headquarters,
-        industry: companyDetails.industry,
-        key_services: companyDetails.key_services,
-        focus_area: companyDetails.focus_area,
-        description: companyDetails.description,
-        image_url: companyDetails.image_url,
-        createdAt: companyDetails.createdAt,
-      };
-      return responseHelper.success(res, "Company details fetched successfully", SUCCESS, responseData);
-    } else {
+    if (isEmpty(companyDetails)) {
       return responseHelper.error(res, `No company found!`, NOT_FOUND);
     }
+
+    const responseData = {
+      company_id: companyDetails?.company_id || "",
+      company_name: companyDetails?.company_name || "",
+      email: companyDetails?.email || "",
+      phone: companyDetails?.phone || "",
+      website: companyDetails?.website || "",
+      established_year: companyDetails?.established_year || "",
+      founder: companyDetails?.founder || "",
+      postal_code: companyDetails?.postal_code || "",
+      headquarters: companyDetails?.headquarters || "",
+      industry: companyDetails?.industry || "",
+      key_services: companyDetails?.key_services || "",
+      focus_area: companyDetails?.focus_area || "",
+      description: companyDetails?.description || "",
+      image_url: companyDetails?.image_url || "",
+      createdAt: companyDetails?.createdAt || "",
+    };
+    return responseHelper.success(res, "Company details fetched successfully", SUCCESS, responseData);
   } catch (err) {
-    return responseHelper.error(res, err.message, ERROR);
+    return responseHelper.error(res, err?.message, ERROR);
   }
 };

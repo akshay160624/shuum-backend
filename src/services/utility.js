@@ -7,6 +7,7 @@ const service = process.env.EMAIL_SERVICE;
 const fromEmail = process.env.EMAIL_FROM;
 const password = process.env.EMAIL_PASSWORD;
 
+// email service to send email
 export async function sendEmail(email, emailBody, subject) {
   var transport = createTransport({
     service: service,
@@ -36,12 +37,14 @@ export async function sendEmail(email, emailBody, subject) {
   });
 }
 
+// generate otp and expiry time
 export function generateOtpWithExpiry() {
   const otp = Math.floor(100000 + Math.random() * 900000); // generate random 6 digit otp
   const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes expiry
   return { otp, otpExpires };
 }
 
+// validate otp
 export async function validateOTP(otp, user) {
   try {
     if ((process.env.ENVIRONMENT_NAME == "DEV" && otp !== 12345) || process.env.ENVIRONMENT_NAME == "PROD") {
@@ -58,6 +61,7 @@ export async function validateOTP(otp, user) {
   }
 }
 
+// create auth JWT token
 export async function createJwtToken(user) {
   try {
     //token object to create token
@@ -75,10 +79,12 @@ export async function createJwtToken(user) {
   }
 }
 
+// options fields validation
 export const findOptionByValue = (options, value) => {
   return options.find((option) => option.value.toUpperCase() === value.toUpperCase().trim()) || null;
 };
 
+// decrypt email from encrypted email
 export const decryptEmail = (encryptedEmail) => {
   const cypherKey = crypto.createHash("sha256").update("Shuum-sCSovQtN3JUYWhGyn7Pf").digest("base64").substr(0, 32);
 
@@ -94,6 +100,7 @@ export const decryptEmail = (encryptedEmail) => {
   return decryptedEmail;
 };
 
+// convert plain password to Hash Password
 export async function encryptPasswordToHash(plainTextPassword) {
   return new Promise((resolve, reject) => {
     bcrypt.hash(plainTextPassword.trim(), 10, (err, result) => {
@@ -106,6 +113,7 @@ export async function encryptPasswordToHash(plainTextPassword) {
   });
 }
 
+// validate password with comparing
 export async function comparePasswords(password, hashPassword) {
   return new Promise((resolve, reject) => {
     bcrypt.compare(password.trim(), hashPassword, (err, result) => {
@@ -117,6 +125,7 @@ export async function comparePasswords(password, hashPassword) {
   });
 }
 
+// request validation for phone number
 export function validatePhoneNumber(phone) {
   let message = "";
   // Convert to string if it's a number
@@ -141,6 +150,7 @@ export function validatePhoneNumber(phone) {
   return message;
 }
 
+// request validation for website url
 export function validateWebsiteURL(website, res) {
   let message = "";
   // regex pattern for website URL
@@ -154,6 +164,7 @@ export function validateWebsiteURL(website, res) {
   return message;
 }
 
+// request validation for established year
 export function validateEstablishedYear(establishedYear) {
   let message = "";
   // Check if the value is not empty and is a 4-digit number
@@ -171,6 +182,7 @@ export function validateEstablishedYear(establishedYear) {
   return message;
 }
 
+// request validation for postal code
 export function validatePostalCode(postalCode) {
   let message = "";
 
@@ -183,6 +195,7 @@ export function validatePostalCode(postalCode) {
   return message;
 }
 
+// request validation for email
 export function validateEmail(email, res) {
   let message = "";
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;

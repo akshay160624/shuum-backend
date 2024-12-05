@@ -2,7 +2,7 @@ import { getOtpRequestValidate, passwordLoginRequestValidate, registerUserReques
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
 import { COMPANY_TABLE, INTRODUCTION_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
-import { CLAIMED, COMPLETED, INACTIVE, PROFILE_KEYWORDS_OPTIONS, ROLE_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
+import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
 import { fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
@@ -14,7 +14,7 @@ import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-m
 import { fetchCompany, fetchUser, updateAuthUser } from "../services/db.services.js";
 import { registerAuthUser } from "../services/db.services.js";
 import { getGoogleUserInfo } from "../services/google-auth.services.js";
-
+const { COMPLETED } = IntroductionStatus;
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
