@@ -127,5 +127,19 @@ export const IntroductionStatus = {
 export const INTRODUCTION_STATUS = Object.values(IntroductionStatus);
 // ------Introduction status END------
 
+// ------Notification types START------
+export const NotificationTypes = {
+  INTRODUCTION_REQUEST: "INTRODUCTION_REQUEST",
+  NOTIFICATION: "NOTIFICATION",
+};
+export const NOTIFICATION_TYPES = Object.values(NotificationTypes);
+// ------Notification types END------
 
+// ------Notification status START------
+export const NotificationStatus = {
+  READ: "READ",
+  UNREAD: "UNREAD",
+};
+export const NOTIFICATION_STATUS = Object.values(NotificationStatus);
+// Notification status END------
 // ------------ MODULE TYPE AND STATUS END ------------
