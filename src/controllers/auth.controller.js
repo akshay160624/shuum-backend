@@ -39,7 +39,7 @@ export const register = async (req, res) => {
             };
             return responseHelper.success(res, "Signup successful", SUCCESS, responseData);
           } else {
-            return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
+            return responseHelper.error(res, `User already exist with ${email}`, BAD_REQUEST);
           }
         }
       } catch (err) {
@@ -65,7 +65,7 @@ export const register = async (req, res) => {
       if (userExist?.signup_completed === true) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
 
       // generate random 6 digit otp
-      const { otp, otpExpires } = generateOtpWithExpiry();
+      const { otp = null, otpExpires = null } = generateOtpWithExpiry();
 
       // generate email template
       const locals = { otp: otp };
@@ -183,7 +183,7 @@ export const getOtp = async (req, res) => {
     if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, NOT_FOUND);
 
     // generate random 6 digit otp
-    const { otp, otpExpires } = generateOtpWithExpiry();
+    const { otp = null, otpExpires = null } = generateOtpWithExpiry();
 
     // generate email template
     const locals = { otp: otp };
@@ -265,7 +265,7 @@ export const passwordLogin = async (req, res) => {
           token: await createJwtToken(userExists),
           onboarding_steps: userExists?.onboarding_steps || "",
         };
-        return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
+        return responseHelper.success(res, "Login successful", SUCCESS, responseData);
       } else {
         return responseHelper.error(res, "Invalid password. Please try again.", UNAUTHORIZED);
       }

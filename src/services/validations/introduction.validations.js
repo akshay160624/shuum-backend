@@ -14,12 +14,35 @@ export const requestIntroductionRequestValidate = async (req, res) => {
     // Conditional validation for `company_id` based on `introduction_type`
     company_id: Joi.string().when("introduction_type", {
       is: "TARGET", // When `introduction_type` is "TARGET"
-      then: Joi.required(), // Make `company_id` required
-      otherwise: Joi.optional(), // Optional otherwise
+      then: Joi.when("target_type", {
+        is: "COMPANY",
+        then: Joi.required(), // Required if `target_type` is "COMPANY"
+        otherwise: Joi.optional(), // Optional otherwise
+      }),
+      otherwise: Joi.optional(),
     }),
 
+    individual: Joi.string().when("introduction_type", {
+      is: "TARGET", // When `introduction_type` is "TARGET"
+      then: Joi.when("target_type", {
+        is: "INDIVIDUAL", // When `target_type` is "INDIVIDUAL"
+        then: Joi.required(), // Required if `target_type` is "INDIVIDUAL"
+        otherwise: Joi.optional(), // Optional otherwise
+      }),
+      otherwise: Joi.optional(),
+    }),
+
+    // Conditional validation for `target_type` based on `introduction_type`
+    target_type: Joi.string()
+      .valid("COMPANY", "INDIVIDUAL") // Restricting target_type to "COMPANY" or "INDIVIDUAL"
+      .when("introduction_type", {
+        is: "TARGET", // When `introduction_type` is "TARGET"
+        then: Joi.required(), // Make `target_type` required
+        otherwise: Joi.forbidden(), // Disallow `target_type` otherwise
+      }),
+
     purpose: Joi.string().required(),
-    introduction_medium: Joi.string().required(),
+    introduction_medium: Joi.string().required().email(),
     elaborate_purpose: Joi.string().required(),
   }).unknown(true); // Allow unknown fields in the request
 

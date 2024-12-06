@@ -1,4 +1,4 @@
-import { GENERAL, INTRODUCTION_STATUS, IntroductionStatus, TARGET, timestamp } from "../services/helpers/constants.js";
+import { GENERAL, INTRODUCTION_STATUS, IntroductionStatus, TARGET, timestamp, targetTypes } from "../services/helpers/constants.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { aggregateFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
@@ -11,6 +11,7 @@ import { fetchCompany, fetchIntroduction } from "../services/db.services.js";
 const { isEmpty, pick, isEqual } = lodash;
 const INTRODUCTION_FILTERS = ["INDIVIDUAL", "COMPANY"];
 const { PENDING } = IntroductionStatus;
+const { COMPANY, INDIVIDUAL } = targetTypes;
 
 // Request introduction
 export const requestIntroduction = async (req, res) => {
@@ -21,7 +22,9 @@ export const requestIntroduction = async (req, res) => {
 
     const {
       introduction_type: introType = "",
+      target_type: targetType = "",
       company_id: companyId = null,
+      individual = "",
       purpose = "",
       introduction_medium: introductionMedium = "",
       elaborate_purpose: elaboratePurpose = "",
@@ -31,7 +34,7 @@ export const requestIntroduction = async (req, res) => {
 
     const introductionType = introType.toUpperCase().trim(); // uppercase the introduction type
 
-    if (introductionType.toUpperCase() === TARGET) {
+    if (introductionType === TARGET && targetType === COMPANY) {
       // check company exist in db
       const companyExist = await fetchCompany({ company_id: companyId });
       if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
@@ -40,8 +43,10 @@ export const requestIntroduction = async (req, res) => {
     const introDetails = {
       introduction_id: uuidv4(),
       user_id: user.user_id,
-      ...(introductionType === TARGET ? { company_id: companyId.trim() } : {}),
       introduction_type: introductionType.trim(),
+      ...(introductionType === TARGET ? { target_type: targetType.trim() } : {}),
+      company_id: introductionType === TARGET && targetType === COMPANY ? companyId.trim() : "",
+      individual: introductionType === TARGET && targetType === INDIVIDUAL ? individual : "",
       purpose: purpose.trim(),
       introduction_medium: introductionMedium.trim(),
       elaborate_purpose: elaboratePurpose.trim(),
@@ -103,11 +108,102 @@ export const introductionList = async (req, res) => {
         $match: filter,
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "user_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "company_id",
+          foreignField: "company_id",
+          as: "company",
+        },
+      },
+      {
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "company_id",
+          foreignField: "company_id",
+          as: "companyMembers",
+        },
+      },
+      {
+        $addFields: {
+          members_count: {
+            $cond: {
+              if: {
+                $ifNull: ["$companyMembers", false],
+              },
+              then: {
+                $size: "$companyMembers",
+              },
+              else: 0,
+            },
+          },
+        },
+      },
+      {
         $project: {
           _id: 0,
           introduction_id: 1,
-          company_id: 1,
+          target_type: 1,
+          company_id: {
+            $cond: {
+              if: {
+                $and: [
+                  {
+                    $eq: ["$introduction_type", "TARGET"],
+                    $eq: ["$target_type", "COMPANY"],
+                  },
+                ],
+              },
+              then: "$company_id",
+              else: "$$REMOVE",
+            },
+          },
+          company_name: "$company.company_name",
+          role: "$user.profile_details.role",
           introduction_type: 1,
+          individual: {
+            $cond: {
+              if: {
+                $eq: ["$target_type", "INDIVIDUAL"],
+              },
+              then: "$individual",
+              else: "$$REMOVE",
+            },
+          },
+          members_count: {
+            $cond: {
+              if: {
+                $and: [
+                  {
+                    $ne: ["$company_id", ""],
+                  },
+                ],
+              },
+              then: {
+                $size: "$companyMembers",
+              },
+              else: "$$REMOVE", // Exclude the field when the condition is not met
+            },
+          },
           purpose: 1,
           introduction_medium: 1,
           elaborate_purpose: 1,

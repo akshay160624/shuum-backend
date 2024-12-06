@@ -125,7 +125,11 @@ export const IntroductionStatus = {
   MATCHED: "MATCHED",
 };
 export const INTRODUCTION_STATUS = Object.values(IntroductionStatus);
-// ------Introduction status END------
 
+export const targetTypes = {
+  COMPANY: "COMPANY",
+  INDIVIDUAL: "INDIVIDUAL",
+};
+// ------Introduction status END------
 
 // ------------ MODULE TYPE AND STATUS END ------------
