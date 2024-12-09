@@ -267,7 +267,7 @@ export const passwordLogin = async (req, res) => {
         };
         return responseHelper.success(res, "Login successful", SUCCESS, responseData);
       } else {
-        return responseHelper.error(res, "Invalid password. Please try again.", UNAUTHORIZED);
+        return responseHelper.error(res, "Invalid password. Please try again.", BAD_REQUEST);
       }
     }
   } catch (err) {
