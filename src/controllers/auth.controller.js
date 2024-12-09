@@ -255,7 +255,7 @@ export const passwordLogin = async (req, res) => {
         return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
       }
       if (isEmpty(userExists.password)) {
-        return responseHelper.error(res, `Password is not configured.`, UNAUTHORIZED);
+        return responseHelper.error(res, `Password is not configured.`, BAD_REQUEST);
       }
 
       const hashPassword = userExists.password;
