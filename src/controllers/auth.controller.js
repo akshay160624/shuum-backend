@@ -1,8 +1,15 @@
-import { getOtpRequestValidate, passwordLoginRequestValidate, registerUserRequestValidate, updateProfileRequestValidate, verifyOtpRequestValidate } from "../services/validations/auth.validations.js";
+import {
+  getOtpRequestValidate,
+  passwordLoginRequestValidate,
+  registerUserRequestValidate,
+  sendInviteRequestValidate,
+  updateProfileRequestValidate,
+  verifyOtpRequestValidate,
+} from "../services/validations/auth.validations.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
-import { COMPANY_TABLE, INTRODUCTION_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
-import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
+import { BAD_REQUEST, CONFLICT, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
+import { COMPANY_TABLE, INTRODUCTION_TABLE, INVITES_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
+import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED, InvitationStatus } from "../services/helpers/constants.js";
 import { fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
@@ -15,6 +22,7 @@ import { fetchCompany, fetchUser, updateAuthUser } from "../services/db.services
 import { registerAuthUser } from "../services/db.services.js";
 import { getGoogleUserInfo } from "../services/google-auth.services.js";
 const { COMPLETED } = IntroductionStatus;
+const { PENDING } = InvitationStatus;
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -502,6 +510,50 @@ export const getProfile = async (req, res) => {
   } catch (err) {
     // Handle unexpected errors
     console.error("Error fetching user profile:", err);
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+export const sendInvite = async (req, res) => {
+  try {
+    // Validate request
+    const isNotValid = await sendInviteRequestValidate(req.body);
+    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+    const { email: rawEmail } = req.body;
+    const { user } = req;
+    const email = rawEmail.toLowerCase().trim();
+
+    // Check if user already exists
+    const userExist = await fetchUser({ email });
+    if (!isEmpty(userExist)) {
+      return responseHelper.error(res, "User already exists. Invite not sent.", CONFLICT);
+    }
+
+    // Generate invite link
+    const inviteLink = `${process.env.CLIENT_LIVE_URL}/signup`;
+
+    // Generate email template
+    const locals = { invite_link: inviteLink };
+    const emailBody = await ejs.renderFile(path.join(__dirname, "../views/emails", "invite.ejs"), { locals: locals });
+
+    // Send invite email
+    await sendEmail(email, emailBody, "You're Invited!");
+
+    // Save invite data to the database
+    const inviteData = {
+      invite_id: uuidv4(),
+      invited_by: user.user_id,
+      email,
+      status: PENDING,
+      ...timestamp,
+    };
+    await insertOneToDb(INVITES_TABLE, inviteData); // save in database
+
+    return responseHelper.success(res, "Invitation email sent successfully.", SUCCESS);
+  } catch (err) {
+    // Handle unexpected errors
+    console.error("Error sending invite email:", err);
     return responseHelper.error(res, err.message, ERROR);
   }
 };

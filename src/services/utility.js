@@ -9,7 +9,7 @@ const password = process.env.EMAIL_PASSWORD;
 
 // email service to send email
 export async function sendEmail(email, emailBody, subject) {
-  var transport = createTransport({
+  const transport = createTransport({
     service: service,
     host: "smtp.gmail.com",
     secure: true,
@@ -19,9 +19,9 @@ export async function sendEmail(email, emailBody, subject) {
       pass: password,
     },
   });
-  var mailOptions = {
+  const mailOptions = {
     to: email,
-    from: `<${process.env.EMAIL_FROM}>`,
+    from: process.env.EMAIL_FROM,
     subject: subject,
     html: emailBody,
   };

@@ -100,7 +100,7 @@ export const PROFILE_KEYWORDS_OPTIONS = [
   { value: "SMART_METERING", label: "Smart Metering" },
 ];
 
-// company member "organization" 52 dropdown options
+// company member "organization" 4 dropdown options
 export const ORGANIZATION_OPTIONS = [
   { value: "CLEAN_TECHNOLOGY", label: "Clean Technology" },
   { value: "ESG_REPORTING", label: "ESG Reporting" },
@@ -131,5 +131,14 @@ export const targetTypes = {
   INDIVIDUAL: "INDIVIDUAL",
 };
 // ------Introduction status END------
+
+// ------Invitation status START------
+export const InvitationStatus = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+};
+export const INVITATION_STATUS = Object.values(InvitationStatus);
+// ------Invitation status END------
 
 // ------------ MODULE TYPE AND STATUS END ------------
