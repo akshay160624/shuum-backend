@@ -7,10 +7,10 @@ import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { INTRODUCTION_TABLE } from "../services/helpers/db-tables.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany, fetchIntroduction } from "../services/db.services.js";
+import { fetchCompany, fetchIntroduction, fetchUser } from "../services/db.services.js";
 const { isEmpty, pick, isEqual } = lodash;
 const INTRODUCTION_FILTERS = ["INDIVIDUAL", "COMPANY"];
-const { PENDING } = IntroductionStatus;
+const { REQUESTED, RECEIVED } = IntroductionStatus;
 const { COMPANY, INDIVIDUAL } = targetTypes;
 
 // Request introduction
@@ -24,7 +24,7 @@ export const requestIntroduction = async (req, res) => {
       introduction_type: introType = "",
       target_type: targetType = "",
       company_id: companyId = null,
-      individual = "",
+      individual_id = "",
       purpose = "",
       introduction_medium: introductionMedium = "",
       elaborate_purpose: elaboratePurpose = "",
@@ -40,19 +40,24 @@ export const requestIntroduction = async (req, res) => {
       if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
     }
 
+    if (introductionType === TARGET && targetType === INDIVIDUAL) {
+      const userExists = await fetchUser({ user_id: individual_id });
+      if (isEmpty(userExists)) return responseHelper.error(res, `Individual user does not exists!`, NOT_FOUND);
+    }
+
     const introDetails = {
       introduction_id: uuidv4(),
       user_id: user.user_id,
       introduction_type: introductionType.trim(),
       ...(introductionType === TARGET ? { target_type: targetType.trim() } : {}),
       company_id: introductionType === TARGET && targetType === COMPANY ? companyId.trim() : "",
-      individual: introductionType === TARGET && targetType === INDIVIDUAL ? individual : "",
+      individual_id: introductionType === TARGET && targetType === INDIVIDUAL ? individual_id : "",
       purpose: purpose.trim(),
       introduction_medium: introductionMedium.trim(),
       elaborate_purpose: elaboratePurpose.trim(),
       ...(introductionType === GENERAL ? { value_offer: valueOffer.trim() } : {}),
       last_interacted: null,
-      status: PENDING,
+      status: REQUESTED,
       ...timestamp,
     };
 
@@ -78,7 +83,7 @@ export const introductionList = async (req, res) => {
     const isNotValid = await introductionListRequestValidate(req.query);
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
-    let { status: status = "", introduction_filter: introductionFilter = "" } = req.query;
+    let { status: status = REQUESTED, introduction_filter: introductionFilter = "" } = req.query;
     const { user } = req;
 
     if (typeof introductionFilter !== "string" || (!isEmpty(introductionFilter) && !INTRODUCTION_FILTERS.includes(introductionFilter.toUpperCase().trim()))) {
@@ -87,7 +92,8 @@ export const introductionList = async (req, res) => {
 
     introductionFilter = introductionFilter?.toUpperCase().trim() || "";
 
-    let filter = user?.user_id ? { user_id: user.user_id } : {};
+    // let filter = user?.user_id && status !== RECEIVED ? { user_id: user.user_id } : {};
+    let filter = {};
 
     // Introduction status filter
     if (!isEmpty(status) && status.toUpperCase().trim() !== "ALL") {
@@ -95,12 +101,18 @@ export const introductionList = async (req, res) => {
       if (!INTRODUCTION_STATUS.includes(status)) {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
       }
-      filter.status = status;
+      filter.status = status === RECEIVED ? REQUESTED : status;
     }
 
     // Introduction type filter for individual and company
     if (!isEmpty(introductionFilter)) {
       filter.introduction_type = introductionFilter === "INDIVIDUAL" ? GENERAL : TARGET;
+    }
+
+    if (status && status === RECEIVED) {
+      filter.individual_id = user.user_id;
+    } else if (status) {
+      filter.user_id = { $eq: user.user_id };
     }
 
     const introductionListQuery = [
@@ -159,6 +171,20 @@ export const introductionList = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "individual_id",
+          foreignField: "user_id",
+          as: "individualUsers",
+        },
+      },
+      {
+        $unwind: {
+          path: "$individualUsers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 0,
           introduction_id: 1,
@@ -180,15 +206,16 @@ export const introductionList = async (req, res) => {
           company_name: "$company.company_name",
           role: "$user.profile_details.role",
           introduction_type: 1,
-          individual: {
+          individual_id: {
             $cond: {
               if: {
                 $eq: ["$target_type", "INDIVIDUAL"],
               },
-              then: "$individual",
+              then: "$individual_id",
               else: "$$REMOVE",
             },
           },
+          individual_name: "$individualUsers.name",
           members_count: {
             $cond: {
               if: {
@@ -209,7 +236,19 @@ export const introductionList = async (req, res) => {
           elaborate_purpose: 1,
           value_offer: 1,
           last_interacted: 1,
-          status: 1,
+          status: {
+            // Show RECEIVED status for individual assigned to logged in user
+            $cond: {
+              if: {
+                $and: [
+                  { $eq: [status, RECEIVED] }, // Check if status is "RECEIVED"
+                  { $eq: ["$individual_id", user.user_id] }, // Check if individual_id matches user_id
+                ],
+              },
+              then: RECEIVED, // Set status to "RECEIVED" if both conditions are true
+              else: "$status", // Otherwise, keep the existing status
+            },
+          },
         },
       },
     ];

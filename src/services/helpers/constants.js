@@ -126,7 +126,8 @@ export const GENERAL = "GENERAL";
 
 // ------Introduction status START------
 export const IntroductionStatus = {
-  PENDING: "PENDING", // Introduction requested
+  REQUESTED: "REQUESTED", // Introduction requested
+  RECEIVED: "RECEIVED",
   WITHDRAW: "WITHDRAW",
   ACCEPTED: "ACCEPTED",
   DENIED: "DENIED",

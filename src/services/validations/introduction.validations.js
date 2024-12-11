@@ -22,7 +22,7 @@ export const requestIntroductionRequestValidate = async (req, res) => {
       otherwise: Joi.optional(),
     }),
 
-    individual: Joi.string().when("introduction_type", {
+    individual_id: Joi.string().when("introduction_type", {
       is: "TARGET", // When `introduction_type` is "TARGET"
       then: Joi.when("target_type", {
         is: "INDIVIDUAL", // When `target_type` is "INDIVIDUAL"
