@@ -30,7 +30,8 @@ export const registerAuthUser = async (email, otp = null, otpExpires = null) => 
   const userData = {
     user_id: uuidv4(),
     email: email.toLowerCase().trim(),
-    name: "",
+    first_name: "",
+    last_name: "",
     otp: otp,
     otp_expiry: otpExpires,
     profile_details: {

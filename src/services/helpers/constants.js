@@ -107,6 +107,15 @@ export const ORGANIZATION_OPTIONS = [
   { value: "BIODIVERSITY_PROTECTION", label: "Biodiversity Protection" },
   { value: "RENEWABLE_HEAT", label: "Renewable Heat" },
 ];
+
+// User profile "Looking for" options
+export const LOOKING_FOR_OPTIONS = [
+  { value: "REFERRAL_PARTNERS", label: "Referral Partners" },
+  { value: "CLEANTECH_PROJECTS", label: "CleanTech Projects" },
+  { value: "INDUSTRY_INSIGHTS", label: "Industry Insights" },
+  { value: "SERVICE_PARTNERS", label: "Service Partners" },
+  { value: "OTHER", label: "Other" },
+];
 // ------------DROPDOWNS END------------
 
 // ------------ MODULE TYPE AND STATUS START ------------
