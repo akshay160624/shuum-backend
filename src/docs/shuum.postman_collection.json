@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "789587f4-b6ad-480f-87cf-c82b3c4c9e73",
+		"_postman_id": "e3e3d548-e052-4d60-a58d-cc58cccd0ac6",
 		"name": "Shuum",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "26749233"
+		"_exporter_id": "39810777",
+		"_collection_link": "https://shuum6.postman.co/workspace/My-Workspace~9908997f-6ac8-4136-831d-c56386a31670/collection/39810777-e3e3d548-e052-4d60-a58d-cc58cccd0ac6?action=share&source=collection_link&creator=39810777"
 	},
 	"item": [
 		{
@@ -38,6 +39,34 @@
 					"response": []
 				},
 				{
+					"name": "Get Login Otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"akshay.shuum1@mailinator.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/get-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"get-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Verify Otp",
 					"event": [
 						{
@@ -62,7 +91,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay123.mailinator@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
+							"raw": "{\r\n    \"email\": \"akshay.shuum1@mailinator.com\",\r\n    \"otp\": 12345\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -108,7 +137,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    // password request\r\n    \"email\":\"akshay1.mailinator@mailinator.com\",\r\n    \"password\": \"123456\"\r\n\r\n    // google request\r\n    // \"code\": \"4/0AeanS0YKce88lWbVotyoNS12p0ty6CZhB34AoLPYln75LRUSL-G0fsjxvuXIEeNNk3r3eA\",\r\n    // \"platform\": \"google\"\r\n}",
+							"raw": "{\r\n    // password request\r\n    // \"email\":\"akshay.mailinator@mailinator.com\",\r\n    \"email\":\"akshay12345.mailinator@mailinator.com\",\r\n    \"password\": \"123456\"\r\n\r\n    // google request\r\n    // \"code\": \"4/0AeanS0YKce88lWbVotyoNS12p0ty6CZhB34AoLPYln75LRUSL-G0fsjxvuXIEeNNk3r3eA\",\r\n    // \"platform\": \"google\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -124,34 +153,6 @@
 								"api",
 								"auth",
 								"login"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Login Otp",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"email\": \"akshay.mailinator@mailinator.com\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/get-otp",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"get-otp"
 							]
 						}
 					},
@@ -405,7 +406,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/company/list",
+							"raw": "{{baseUrl}}/api/company/list?search_text=",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -417,7 +418,11 @@
 							"query": [
 								{
 									"key": "search_text",
-									"value": "",
+									"value": ""
+								},
+								{
+									"key": "status",
+									"value": "CLAIMED",
 									"disabled": true
 								}
 							]
@@ -483,7 +488,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"Akshay Mistry\",\r\n    \"role\": \"BUSINESS_DEVELOPMENT_&_SALES\",\r\n    // ROLE OPTIONS: {\r\n    //      BUSINESS_DEVELOPMENT_&_SALES\r\n    //      CONSULTING_&_ADVISORY\r\n    //      INVESTMENTS_&_FINANCING\r\n    // }\r\n    \"linkedin_url\": \"https://www.google.com\",\r\n    \"password\": \"123456\",\r\n    \"confirm_password\": \"123456\"\r\n}",
+							"raw": "{\r\n    \"name\": \"Akshay Mistry\",\r\n    \"role\": \"BUSINESS_DEVELOPMENT_&_SALES\",\r\n    // -----------------\r\n    // ROLE OPTIONS: {\r\n    //      BUSINESS_DEVELOPMENT_&_SALES\r\n    //      CONSULTING_&_ADVISORY\r\n    //      INVESTMENTS_&_FINANCING\r\n    // }\r\n    // -----------------\r\n    \"linkedin_url\": \"https://www.linkedin.com/in/sad\"\r\n    // \"password\": \"123456\",\r\n    // \"confirm_password\": \"123456\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -520,6 +525,11 @@
 							"mode": "formdata",
 							"formdata": [
 								{
+									"key": "other_looking_for",
+									"value": "dsadsad",
+									"type": "text"
+								},
+								{
 									"key": "company_id",
 									"value": "6837632a-a1f7-40c8-a1fc-dd3e58a3bd7c",
 									"type": "text"
@@ -536,7 +546,7 @@
 								},
 								{
 									"key": "looking_for",
-									"value": "looking_for",
+									"value": "OTHER",
 									"type": "text"
 								},
 								{
@@ -546,20 +556,19 @@
 								},
 								{
 									"key": "profile_keywords[0]",
-									"value": "CLEAN_TECHNOLOGY",
+									"value": "CHARGING_SOLUTIONS",
 									"description": "// below are the options \nCHARGING_SOLUTIONS\nDECARBONIZATION\nWATER_TREATMENTS\nELECTRICAL_INFRASTRUCTURE\nSMART_METERING",
 									"type": "text"
 								},
 								{
 									"key": "profile_keywords[1]",
-									"value": "NET_ZERO",
+									"value": "SMART_METERING",
 									"type": "text"
 								},
 								{
 									"key": "organization",
 									"value": "ABCxx",
-									"type": "text",
-									"disabled": true
+									"type": "text"
 								},
 								{
 									"key": "socials[0]",
@@ -572,8 +581,13 @@
 									"type": "text"
 								},
 								{
-									"key": "name",
+									"key": "first_name",
 									"value": "Akshay",
+									"type": "text"
+								},
+								{
+									"key": "linkedin_url",
+									"value": "linkedin.com/in/abcs",
 									"type": "text"
 								},
 								{
@@ -596,6 +610,31 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/users?search_text=Aks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"users"
+							],
+							"query": [
+								{
+									"key": "search_text",
+									"value": "Aks"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -609,7 +648,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    // GENERAL field\r\n    \"introduction_type\": \"TARGET\",\r\n    \"company_id\": \"6837632a-a1f7-40c8-a1fc-dd3e58a3bd7c\",\r\n\r\n    // TARGET field\r\n    // \"introduction_type\": \"GENERAL\",\r\n    // \"value_offer\": \"sds\",\r\n\r\n    // Required fields\r\n    \"purpose\": \"fdstretadfe66\",\r\n    \"introduction_medium\": \"asdtretad66\",\r\n    \"elaborate_purpose\": \"easdrertrew66\"\r\n}",
+							"raw": "//----- 1. TARGET request for company -----//\r\n{\r\n    \"introduction_type\": \"TARGET\", // GENERAL, TARGET\r\n    \"target_type\": \"COMPANY\", // COMPANY, INDIVIDUAL\r\n    \"company_id\": \"6837632a-a1f7-40c8-a1fc-dd3e58a3bd7c\",\r\n    \"purpose\": \"fdstretadfe66\",\r\n    \"introduction_medium\": \"asdtretad66@mailinator.com\", // email only\r\n    \"elaborate_purpose\": \"easdrertrew66\"\r\n}\r\n//----- 2. TARGET request for individual -----//\r\n// {\r\n//     \"introduction_type\": \"TARGET\", // GENERAL, TARGET\r\n//     \"target_type\": \"INDIVIDUAL\", // COMPANY, INDIVIDUAL\r\n//     \"individual_id\": \"a923439b-7a7b-495e-9411-2e76d0bd020d\",\r\n//     \"purpose\": \"fdstretadfe66\",\r\n//     \"introduction_medium\": \"asdtretad66@mailinator.com\", // email only\r\n//     \"elaborate_purpose\": \"easdrertrew66\"\r\n// }\r\n//----- 3. GENERAL request -----//\r\n// {\r\n//     \"introduction_type\": \"GENERAL\", // GENERAL, TARGET\r\n//     \"value_offer\": \"dfsdffre\",\r\n//     \"purpose\": \"fdstretadfe66\",\r\n//     \"introduction_medium\": \"asdtretad66@mailinator.com\", // email only\r\n//     \"elaborate_purpose\": \"easdrertrew66\"\r\n// }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -636,7 +675,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/introduction/list?introduction_filter=COMPANY",
+							"raw": "{{baseUrl}}/api/introduction/list?status=RECEIVED",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -654,7 +693,12 @@
 								{
 									"key": "introduction_filter",
 									"value": "COMPANY",
-									"description": "INDIVIDUAL, COMPANY"
+									"description": "INDIVIDUAL, COMPANY",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "RECEIVED"
 								}
 							]
 						}
@@ -667,25 +711,21 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/introduction/list?introduction_filter=COMPANY",
+							"raw": "{{baseUrl}}/api/introduction/view/91c160d1-df0c-4f38-b178-ed1884ac6978",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"introduction",
-								"list"
+								"view",
+								"91c160d1-df0c-4f38-b178-ed1884ac6978"
 							],
 							"query": [
 								{
 									"key": "status",
 									"value": "ACCEPTED",
 									"disabled": true
-								},
-								{
-									"key": "introduction_filter",
-									"value": "COMPANY",
-									"description": "INDIVIDUAL, COMPANY"
 								}
 							]
 						}
@@ -718,7 +758,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"introduction_id\": \"bdf43d04-f480-429c-8c50-4c877d27705f\",\r\n    \"status\": \"PENDING\" // PENDING, WITHDRAW, ACCEPTED, DENIED\r\n}",
+							"raw": "{\r\n    \"introduction_id\": \"0259de1b-2c89-40ed-921e-e0b784aaea29\",\r\n    \"status\": \"ACCEPTED\" // PENDING, WITHDRAW, ACCEPTED, DENIED\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
