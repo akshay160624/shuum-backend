@@ -10,7 +10,7 @@ import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, CONFLICT, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { COMPANY_TABLE, INTRODUCTION_TABLE, INVITES_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
 import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED, InvitationStatus, LOOKING_FOR_OPTIONS, ROLE_OPTIONS } from "../services/helpers/constants.js";
-import { fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
+import { aggregateFromDb, fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
 import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateLinkedinUrl, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
 import path from "path";
@@ -535,6 +535,59 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// users list for individuals
+export const usersList = async (req, res) => {
+  try {
+    const { search_text: searchText = "" } = req.query;
+    const { user } = req;
+
+    let filter = {
+      email_verified: true,
+      signup_completed: true,
+    };
+
+    // Define the second $match stage for the dynamic search filter
+    const searchMatch = searchText.trim()
+      ? {
+          $or: [
+            { name: { $regex: new RegExp(searchText.trim(), "i") } },
+            { first_name: { $regex: new RegExp(searchText.trim(), "i") } },
+            { last_name: { $regex: new RegExp(searchText.trim(), "i") } },
+          ],
+        }
+      : null;
+
+    // TODO: remove requested users data from result if 3 person flow
+    // list query
+    const usersListQuery = [
+      {
+        $match: filter,
+      },
+      // Second $match stage for dynamic search filters
+      ...(searchMatch ? [{ $match: searchMatch }] : []),
+      // Projection stage
+      {
+        $project: {
+          _id: 0,
+          user_id: 1,
+          name: 1,
+          first_name: 1,
+          last_name: 1,
+        },
+      },
+    ];
+
+    const users = await aggregateFromDb(USER_TABLE, usersListQuery);
+    if (!isEmpty(users)) {
+      return responseHelper.success(res, "Users list fetched successfully", SUCCESS, users);
+    } else {
+      return responseHelper.error(res, "No users found", NOT_FOUND);
+    }
+  } catch (err) {
+    console.error("Error fetching users list:", err);
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
 export const sendInvite = async (req, res) => {
   try {
     // Validate request
