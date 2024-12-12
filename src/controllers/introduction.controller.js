@@ -1,4 +1,4 @@
-import { GENERAL, INTRODUCTION_STATUS, IntroductionStatus, TARGET, timestamp } from "../services/helpers/constants.js";
+import { GENERAL, INTRODUCTION_STATUS, IntroductionStatus, TARGET, timestamp, targetTypes } from "../services/helpers/constants.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { aggregateFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
@@ -7,10 +7,11 @@ import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { INTRODUCTION_TABLE } from "../services/helpers/db-tables.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany, fetchIntroduction } from "../services/db.services.js";
+import { fetchCompany, fetchIntroduction, fetchUser } from "../services/db.services.js";
 const { isEmpty, pick, isEqual } = lodash;
 const INTRODUCTION_FILTERS = ["INDIVIDUAL", "COMPANY"];
-const { PENDING } = IntroductionStatus;
+const { REQUESTED, RECEIVED } = IntroductionStatus;
+const { COMPANY, INDIVIDUAL } = targetTypes;
 
 // Request introduction
 export const requestIntroduction = async (req, res) => {
@@ -21,7 +22,9 @@ export const requestIntroduction = async (req, res) => {
 
     const {
       introduction_type: introType = "",
+      target_type: targetType = "",
       company_id: companyId = null,
+      individual_id = "",
       purpose = "",
       introduction_medium: introductionMedium = "",
       elaborate_purpose: elaboratePurpose = "",
@@ -31,23 +34,30 @@ export const requestIntroduction = async (req, res) => {
 
     const introductionType = introType.toUpperCase().trim(); // uppercase the introduction type
 
-    if (introductionType.toUpperCase() === TARGET) {
+    if (introductionType === TARGET && targetType === COMPANY) {
       // check company exist in db
       const companyExist = await fetchCompany({ company_id: companyId });
       if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
     }
 
+    if (introductionType === TARGET && targetType === INDIVIDUAL) {
+      const userExists = await fetchUser({ user_id: individual_id });
+      if (isEmpty(userExists)) return responseHelper.error(res, `Individual user does not exists!`, NOT_FOUND);
+    }
+
     const introDetails = {
       introduction_id: uuidv4(),
       user_id: user.user_id,
-      ...(introductionType === TARGET ? { company_id: companyId.trim() } : {}),
       introduction_type: introductionType.trim(),
+      ...(introductionType === TARGET ? { target_type: targetType.trim() } : {}),
+      company_id: introductionType === TARGET && targetType === COMPANY ? companyId.trim() : "",
+      individual_id: introductionType === TARGET && targetType === INDIVIDUAL ? individual_id : "",
       purpose: purpose.trim(),
       introduction_medium: introductionMedium.trim(),
       elaborate_purpose: elaboratePurpose.trim(),
       ...(introductionType === GENERAL ? { value_offer: valueOffer.trim() } : {}),
       last_interacted: null,
-      status: PENDING,
+      status: REQUESTED,
       ...timestamp,
     };
 
@@ -73,7 +83,7 @@ export const introductionList = async (req, res) => {
     const isNotValid = await introductionListRequestValidate(req.query);
     if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
-    let { status: status = "", introduction_filter: introductionFilter = "" } = req.query;
+    let { status: status = REQUESTED, introduction_filter: introductionFilter = "" } = req.query;
     const { user } = req;
 
     if (typeof introductionFilter !== "string" || (!isEmpty(introductionFilter) && !INTRODUCTION_FILTERS.includes(introductionFilter.toUpperCase().trim()))) {
@@ -82,7 +92,8 @@ export const introductionList = async (req, res) => {
 
     introductionFilter = introductionFilter?.toUpperCase().trim() || "";
 
-    let filter = user?.user_id ? { user_id: user.user_id } : {};
+    // let filter = user?.user_id && status !== RECEIVED ? { user_id: user.user_id } : {};
+    let filter = {};
 
     // Introduction status filter
     if (!isEmpty(status) && status.toUpperCase().trim() !== "ALL") {
@@ -90,7 +101,7 @@ export const introductionList = async (req, res) => {
       if (!INTRODUCTION_STATUS.includes(status)) {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
       }
-      filter.status = status;
+      filter.status = status === RECEIVED ? REQUESTED : status;
     }
 
     // Introduction type filter for individual and company
@@ -98,22 +109,146 @@ export const introductionList = async (req, res) => {
       filter.introduction_type = introductionFilter === "INDIVIDUAL" ? GENERAL : TARGET;
     }
 
+    if (status && status === RECEIVED) {
+      filter.individual_id = user.user_id;
+    } else if (status) {
+      filter.user_id = { $eq: user.user_id };
+    }
+
     const introductionListQuery = [
       {
         $match: filter,
       },
       {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "user_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "companies",
+          localField: "company_id",
+          foreignField: "company_id",
+          as: "company",
+        },
+      },
+      {
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "company_id",
+          foreignField: "company_id",
+          as: "companyMembers",
+        },
+      },
+      {
+        $addFields: {
+          members_count: {
+            $cond: {
+              if: {
+                $ifNull: ["$companyMembers", false],
+              },
+              then: {
+                $size: "$companyMembers",
+              },
+              else: 0,
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "individual_id",
+          foreignField: "user_id",
+          as: "individualUsers",
+        },
+      },
+      {
+        $unwind: {
+          path: "$individualUsers",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: 0,
           introduction_id: 1,
-          company_id: 1,
+          target_type: 1,
+          company_id: {
+            $cond: {
+              if: {
+                $and: [
+                  {
+                    $eq: ["$introduction_type", "TARGET"],
+                    $eq: ["$target_type", "COMPANY"],
+                  },
+                ],
+              },
+              then: "$company_id",
+              else: "$$REMOVE",
+            },
+          },
+          company_name: "$company.company_name",
+          role: "$user.profile_details.role",
           introduction_type: 1,
+          individual_id: {
+            $cond: {
+              if: {
+                $eq: ["$target_type", "INDIVIDUAL"],
+              },
+              then: "$individual_id",
+              else: "$$REMOVE",
+            },
+          },
+          individual_name: "$individualUsers.name",
+          members_count: {
+            $cond: {
+              if: {
+                $and: [
+                  {
+                    $ne: ["$company_id", ""],
+                  },
+                ],
+              },
+              then: {
+                $size: "$companyMembers",
+              },
+              else: "$$REMOVE", // Exclude the field when the condition is not met
+            },
+          },
           purpose: 1,
           introduction_medium: 1,
           elaborate_purpose: 1,
           value_offer: 1,
           last_interacted: 1,
-          status: 1,
+          status: {
+            // Show RECEIVED status for individual assigned to logged in user
+            $cond: {
+              if: {
+                $and: [
+                  { $eq: [status, RECEIVED] }, // Check if status is "RECEIVED"
+                  { $eq: ["$individual_id", user.user_id] }, // Check if individual_id matches user_id
+                ],
+              },
+              then: RECEIVED, // Set status to "RECEIVED" if both conditions are true
+              else: "$status", // Otherwise, keep the existing status
+            },
+          },
         },
       },
     ];

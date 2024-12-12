@@ -1,10 +1,17 @@
-import { getOtpRequestValidate, passwordLoginRequestValidate, registerUserRequestValidate, updateProfileRequestValidate, verifyOtpRequestValidate } from "../services/validations/auth.validations.js";
+import {
+  getOtpRequestValidate,
+  passwordLoginRequestValidate,
+  registerUserRequestValidate,
+  sendInviteRequestValidate,
+  updateProfileRequestValidate,
+  verifyOtpRequestValidate,
+} from "../services/validations/auth.validations.js";
 import * as responseHelper from "../services/helpers/response-helper.js";
-import { BAD_REQUEST, ERROR, NOT_FOUND, SUCCESS, UNAUTHORIZED } from "../services/helpers/status-code.js";
-import { COMPANY_TABLE, INTRODUCTION_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
-import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED } from "../services/helpers/constants.js";
-import { fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
-import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateOTP } from "../services/utility.js";
+import { BAD_REQUEST, CONFLICT, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
+import { COMPANY_TABLE, INTRODUCTION_TABLE, INVITES_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
+import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED, InvitationStatus, LOOKING_FOR_OPTIONS, ROLE_OPTIONS } from "../services/helpers/constants.js";
+import { aggregateFromDb, fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
+import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateLinkedinUrl, validateOTP } from "../services/utility.js";
 import ejs from "ejs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,6 +22,7 @@ import { fetchCompany, fetchUser, updateAuthUser } from "../services/db.services
 import { registerAuthUser } from "../services/db.services.js";
 import { getGoogleUserInfo } from "../services/google-auth.services.js";
 const { COMPLETED } = IntroductionStatus;
+const { PENDING } = InvitationStatus;
 const { isEmpty } = lodash;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,7 +47,7 @@ export const register = async (req, res) => {
             };
             return responseHelper.success(res, "Signup successful", SUCCESS, responseData);
           } else {
-            return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
+            return responseHelper.error(res, `User already exist with ${email}`, BAD_REQUEST);
           }
         }
       } catch (err) {
@@ -65,7 +73,7 @@ export const register = async (req, res) => {
       if (userExist?.signup_completed === true) return responseHelper.error(res, `User already exist with ${email}.`, BAD_REQUEST);
 
       // generate random 6 digit otp
-      const { otp, otpExpires } = generateOtpWithExpiry();
+      const { otp = null, otpExpires = null } = generateOtpWithExpiry();
 
       // generate email template
       const locals = { otp: otp };
@@ -82,7 +90,8 @@ export const register = async (req, res) => {
         const userData = {
           user_id: uuidv4(),
           email: email.toLowerCase().trim(),
-          name: "",
+          first_name: "",
+          last_name: "",
           otp: otp,
           otp_expiry: otpExpires,
           profile_details: {
@@ -183,7 +192,7 @@ export const getOtp = async (req, res) => {
     if (isEmpty(userExist)) return responseHelper.error(res, `User does not exist with ${email}.`, NOT_FOUND);
 
     // generate random 6 digit otp
-    const { otp, otpExpires } = generateOtpWithExpiry();
+    const { otp = null, otpExpires = null } = generateOtpWithExpiry();
 
     // generate email template
     const locals = { otp: otp };
@@ -255,7 +264,7 @@ export const passwordLogin = async (req, res) => {
         return responseHelper.error(res, `User does not exists.`, NOT_FOUND);
       }
       if (isEmpty(userExists.password)) {
-        return responseHelper.error(res, `Password is not configured.`, UNAUTHORIZED);
+        return responseHelper.error(res, `Password is not configured.`, BAD_REQUEST);
       }
 
       const hashPassword = userExists.password;
@@ -265,9 +274,9 @@ export const passwordLogin = async (req, res) => {
           token: await createJwtToken(userExists),
           onboarding_steps: userExists?.onboarding_steps || "",
         };
-        return responseHelper.success(res, "Logged in successful", SUCCESS, responseData);
+        return responseHelper.success(res, "Login successful", SUCCESS, responseData);
       } else {
-        return responseHelper.error(res, "Invalid password. Please try again.", UNAUTHORIZED);
+        return responseHelper.error(res, "Invalid password. Please try again.", BAD_REQUEST);
       }
     }
   } catch (err) {
@@ -280,24 +289,27 @@ export const updateUserInfo = async (req, res) => {
     const { user = null } = req; // get user details from auth token
     const { name = "", role = "", linkedin_url: linkedinUrl = "", password, confirm_password: confirmPassword } = req.body;
 
-    const userExist = await fetchOneFromDb(USER_TABLE, { user_id: user.user_id });
     const userUpdateData = { updatedAt: new Date() };
     userUpdateData.profile_details = user.profile_details;
 
     if (!isEmpty(name)) {
-      userUpdateData.name = name.trim();
+      userUpdateData.first_name = name.trim();
     }
 
     // role available then validate
     if (!isEmpty(role)) {
-      // const roleOption = findOptionByValue(ROLE_OPTIONS, role);
-      // if (!roleOption) {
-      //   return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
-      // }
-      userUpdateData.profile_details.role = role.trim();
+      const roleOption = findOptionByValue(ROLE_OPTIONS, role);
+      if (!roleOption) {
+        return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
+      }
+      userUpdateData.profile_details.role = role.toUpperCase().trim();
     }
     if (!isEmpty(linkedinUrl)) {
-      userUpdateData.profile_details.linkedin_url = linkedinUrl.trim();
+      const { message = "", url = "" } = validateLinkedinUrl(linkedinUrl.trim());
+      if (!isEmpty(message)) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+      userUpdateData.profile_details.linkedin_url = url;
     }
 
     // validate password
@@ -345,12 +357,15 @@ export const updateUserProfile = async (req, res) => {
     const { user } = req;
     const {
       company_id: companyId = "",
-      name = "",
+      first_name: firstName = "",
+      last_name: lastName = "",
       role = "",
       about_me: aboutMe = "",
       looking_for: lookingFor = "",
+      other_looking_for: otherLookingFor = "",
       profile_keywords: profileKeywords = [],
       organization = "",
+      linkedin_url: linkedinUrl = "",
       socials = [],
       onboarding_steps: onboardingSteps = "",
     } = req.body;
@@ -364,36 +379,48 @@ export const updateUserProfile = async (req, res) => {
     //   }
     // }
 
-    const companyFilter = {
-      company_id: companyId,
-    };
-
     // check company exist in db
-    const companyExist = await fetchCompany(companyFilter);
+    const companyExist = await fetchCompany({ company_id: companyId });
     if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
-
-    // role available then validate
-    // if (!isEmpty(role)) {
-    //   const roleOption = findOptionByValue(ROLE_OPTIONS, role);
-    //   if (!roleOption) {
-    //     return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
-    //   }
-    // }
 
     const { location, originalname, filename: fileName } = req.file;
 
-    const profileData = {
-      company_id: companyId,
-      profile_details: {
-        role: role ? role.toUpperCase().trim() : user.profile_details?.role,
-        about_me: aboutMe ? aboutMe.trim() : user.profile_details?.about_me,
-        looking_for: lookingFor ? lookingFor.trim() : user.profile_details?.looking_for,
-        organization: organization ? organization.toUpperCase().trim() : user.profile_details?.organization,
-      },
-      updatedAt: new Date(),
-    };
+    const profileData = { company_id: companyId };
+    profileData.profile_details = user.profile_details;
+    if (!isEmpty(role)) {
+      const roleOption = findOptionByValue(ROLE_OPTIONS, role);
+      if (!roleOption) {
+        return responseHelper.error(res, "Invalid role value", BAD_REQUEST);
+      }
+      profileData.profile_details.role = role.toUpperCase().trim();
+    }
+    if (!isEmpty(aboutMe)) profileData.profile_details.about_me = aboutMe.trim();
+    if (!isEmpty(lookingFor)) {
+      const lookingForOption = lookingFor.toUpperCase().trim();
+      const validLookingForValue = findOptionByValue(LOOKING_FOR_OPTIONS, lookingForOption);
 
-    if (name) profileData.name = name;
+      if (!validLookingForValue) {
+        return responseHelper.error(res, "Invalid looking for value", BAD_REQUEST);
+      }
+
+      if (lookingForOption === "OTHER" && isEmpty(otherLookingFor)) {
+        return responseHelper.error(res, "Invalid other looking for value", BAD_REQUEST);
+      }
+
+      profileData.profile_details.looking_for = lookingForOption;
+      profileData.profile_details.other_looking_for = lookingForOption === "OTHER" ? otherLookingFor || "" : "";
+    }
+    if (!isEmpty(organization)) profileData.profile_details.organization = organization.toUpperCase().trim();
+    if (!isEmpty(linkedinUrl)) {
+      const { message = "", url = "" } = validateLinkedinUrl(linkedinUrl.trim());
+      if (!isEmpty(message)) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+      profileData.profile_details.linkedin_url = url;
+    }
+
+    if (firstName) profileData.first_name = firstName;
+    if (lastName) profileData.last_name = lastName;
     if (onboardingSteps) profileData.onboarding_steps = onboardingSteps;
 
     if (!isEmpty(profileKeywords)) {
@@ -426,6 +453,7 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
+    profileData.updatedAt = new Date();
     // insert into the database
     const profileSaved = await updateOneToDb(USER_TABLE, { user_id: user.user_id }, profileData);
     if (!isEmpty(profileSaved)) {
@@ -489,7 +517,8 @@ export const getProfile = async (req, res) => {
 
     // Construct the response data
     const responseData = {
-      name: userExist?.name || "",
+      first_name: userExist?.first_name || userExist?.name || "",
+      last_name: userExist?.last_name || "",
       profile_url: userExist?.profile_url || "",
       address: "", //TODO: Add address field
       role: userExist?.profile_details?.role || "",
@@ -502,6 +531,103 @@ export const getProfile = async (req, res) => {
   } catch (err) {
     // Handle unexpected errors
     console.error("Error fetching user profile:", err);
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+
+// users list for individuals
+export const usersList = async (req, res) => {
+  try {
+    const { search_text: searchText = "" } = req.query;
+    const { user } = req;
+
+    let filter = {
+      email_verified: true,
+      signup_completed: true,
+    };
+
+    // Define the second $match stage for the dynamic search filter
+    const searchMatch = searchText.trim()
+      ? {
+          $or: [
+            { name: { $regex: new RegExp(searchText.trim(), "i") } },
+            { first_name: { $regex: new RegExp(searchText.trim(), "i") } },
+            { last_name: { $regex: new RegExp(searchText.trim(), "i") } },
+          ],
+        }
+      : null;
+
+    // TODO: remove requested users data from result if 3 person flow
+    // list query
+    const usersListQuery = [
+      {
+        $match: filter,
+      },
+      // Second $match stage for dynamic search filters
+      ...(searchMatch ? [{ $match: searchMatch }] : []),
+      // Projection stage
+      {
+        $project: {
+          _id: 0,
+          user_id: 1,
+          name: 1,
+          first_name: 1,
+          last_name: 1,
+        },
+      },
+    ];
+
+    const users = await aggregateFromDb(USER_TABLE, usersListQuery);
+    if (!isEmpty(users)) {
+      return responseHelper.success(res, "Users list fetched successfully", SUCCESS, users);
+    } else {
+      return responseHelper.error(res, "No users found", NOT_FOUND);
+    }
+  } catch (err) {
+    console.error("Error fetching users list:", err);
+    return responseHelper.error(res, err.message, ERROR);
+  }
+};
+export const sendInvite = async (req, res) => {
+  try {
+    // Validate request
+    const isNotValid = await sendInviteRequestValidate(req.body);
+    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+
+    const { email: rawEmail } = req.body;
+    const { user } = req;
+    const email = rawEmail.toLowerCase().trim();
+
+    // Check if user already exists
+    const userExist = await fetchUser({ email });
+    if (!isEmpty(userExist)) {
+      return responseHelper.error(res, "User already exists. Invite not sent.", CONFLICT);
+    }
+
+    // Generate invite link
+    const inviteLink = `${process.env.CLIENT_LIVE_URL}/signup`;
+
+    // Generate email template
+    const locals = { invite_link: inviteLink };
+    const emailBody = await ejs.renderFile(path.join(__dirname, "../views/emails", "invite.ejs"), { locals: locals });
+
+    // Send invite email
+    await sendEmail(email, emailBody, "You're Invited!");
+
+    // Save invite data to the database
+    const inviteData = {
+      invite_id: uuidv4(),
+      invited_by: user.user_id,
+      email,
+      status: PENDING,
+      ...timestamp,
+    };
+    await insertOneToDb(INVITES_TABLE, inviteData); // save in database
+
+    return responseHelper.success(res, "Invitation email sent successfully.", SUCCESS);
+  } catch (err) {
+    // Handle unexpected errors
+    console.error("Error sending invite email:", err);
     return responseHelper.error(res, err.message, ERROR);
   }
 };

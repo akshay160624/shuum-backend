@@ -9,7 +9,7 @@ const password = process.env.EMAIL_PASSWORD;
 
 // email service to send email
 export async function sendEmail(email, emailBody, subject) {
-  var transport = createTransport({
+  const transport = createTransport({
     service: service,
     host: "smtp.gmail.com",
     secure: true,
@@ -19,9 +19,9 @@ export async function sendEmail(email, emailBody, subject) {
       pass: password,
     },
   });
-  var mailOptions = {
+  const mailOptions = {
     to: email,
-    from: `<${process.env.EMAIL_FROM}>`,
+    from: process.env.EMAIL_FROM,
     subject: subject,
     html: emailBody,
   };
@@ -205,4 +205,26 @@ export function validateEmail(email, res) {
   }
 
   return message;
+}
+
+// linked url validation
+export function validateLinkedinUrl(url) {
+  let message = "";
+  const regex = /linkedin\.com\/in\/.+/; // This regex checks for at least one character after "linkedin.com/"
+
+  // Check if the URL contains "linkedin.com"
+  if (!url.includes("linkedin.com/in/")) {
+    message = "Invalid URL: must contain 'linkedin.com/in/'";
+  } else if (url.includes("http://")) {
+    message = "Invalid URL: It must contain 'https'";
+  } else if (!regex.test(url)) {
+    // Check if the URL has a valid path after "linkedin.com/"
+    message = "Invalid URL: must have a valid user url";
+  } else if (!url.startsWith("https://")) {
+    // If the URL does not start with "https://", prepend it
+    url = "https://" + url;
+  }
+
+  // Return the formatted URL
+  return { url, message };
 }

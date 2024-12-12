@@ -6,11 +6,12 @@ import "./src/connection/server.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// routes
+// routes start
 import userAuth from "./src/routes/auth.routes.js";
 import company from "./src/routes/company.routes.js";
 import introduction from "./src/routes/introduction.routes.js";
 import notification from "./src/routes/notification.routes.js";
+// routes end
 
 const PORT = process.env.PORT || 8000;
 

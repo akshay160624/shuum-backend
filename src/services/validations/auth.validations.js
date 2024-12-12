@@ -59,3 +59,14 @@ export const updateProfileRequestValidate = async (req, res) => {
   }
   return null;
 };
+
+export const sendInviteRequestValidate = async (req, res) => {
+  const schema = Joi.object({
+    email: Joi.string().required().email(),
+  }).unknown(true);
+  const { error } = schema.validate(req);
+  if (error) {
+    return error;
+  }
+  return null;
+};

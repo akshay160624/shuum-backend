@@ -149,24 +149,30 @@ export const addCompany = async (req, res) => {
 
 export const companyList = async (req, res) => {
   try {
-    const { search_text: searchText = "" } = req.query;
+    const { search_text: searchText = "", status: statusRaw } = req.query;
 
-    let filter = {
-      // status: ACTIVE,
-    };
+    // make status as request format
+    const status = statusRaw ? statusRaw.toUpperCase().trim() : "";
 
-    const searchData = new RegExp(searchText.trim(), "i");
+    let filter = {};
+    if (!isEmpty(status)) {
+      const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
+      if (!validCompanyStatus) {
+        return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
+      }
+      filter.status = status;
+    }
 
     if (searchText) {
       filter = {
         ...filter,
         company_name: {
-          $regex: searchData,
+          $regex: new RegExp(searchText.trim(), "i"),
         },
       };
     }
 
-    let query = [
+    const query = [
       {
         $match: filter,
       },
@@ -304,15 +310,7 @@ export const companyList = async (req, res) => {
     ];
 
     // fetch company list
-    let companyList = [];
-    if (!searchText && hasCache("companies")) {
-      companyList = getCache("companies"); // fetch company list cache
-    } else {
-      companyList = await aggregateFromDb(COMPANY_TABLE, query);
-      if (!searchText) {
-        setCache("companies", companyList); // set company list cache
-      }
-    }
+    const companyList = await aggregateFromDb(COMPANY_TABLE, query);
     if (!isEmpty(companyList)) {
       return responseHelper.success(res, "Company list fetched successfully", SUCCESS, companyList);
     } else {

@@ -100,12 +100,21 @@ export const PROFILE_KEYWORDS_OPTIONS = [
   { value: "SMART_METERING", label: "Smart Metering" },
 ];
 
-// company member "organization" 52 dropdown options
+// company member "organization" 4 dropdown options
 export const ORGANIZATION_OPTIONS = [
   { value: "CLEAN_TECHNOLOGY", label: "Clean Technology" },
   { value: "ESG_REPORTING", label: "ESG Reporting" },
   { value: "BIODIVERSITY_PROTECTION", label: "Biodiversity Protection" },
   { value: "RENEWABLE_HEAT", label: "Renewable Heat" },
+];
+
+// User profile "Looking for" options
+export const LOOKING_FOR_OPTIONS = [
+  { value: "REFERRAL_PARTNERS", label: "Referral Partners" },
+  { value: "CLEANTECH_PROJECTS", label: "CleanTech Projects" },
+  { value: "INDUSTRY_INSIGHTS", label: "Industry Insights" },
+  { value: "SERVICE_PARTNERS", label: "Service Partners" },
+  { value: "OTHER", label: "Other" },
 ];
 // ------------DROPDOWNS END------------
 
@@ -117,7 +126,8 @@ export const GENERAL = "GENERAL";
 
 // ------Introduction status START------
 export const IntroductionStatus = {
-  PENDING: "PENDING", // Introduction requested
+  REQUESTED: "REQUESTED", // Introduction requested
+  RECEIVED: "RECEIVED",
   WITHDRAW: "WITHDRAW",
   ACCEPTED: "ACCEPTED",
   DENIED: "DENIED",
@@ -125,7 +135,21 @@ export const IntroductionStatus = {
   MATCHED: "MATCHED",
 };
 export const INTRODUCTION_STATUS = Object.values(IntroductionStatus);
+
+export const targetTypes = {
+  COMPANY: "COMPANY",
+  INDIVIDUAL: "INDIVIDUAL",
+};
 // ------Introduction status END------
+
+// ------Invitation status START------
+export const InvitationStatus = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+  REJECTED: "REJECTED",
+};
+export const INVITATION_STATUS = Object.values(InvitationStatus);
+// ------Invitation status END------
 
 // ------Notification types START------
 export const NotificationTypes = {
@@ -142,4 +166,5 @@ export const NotificationStatus = {
 };
 export const NOTIFICATION_STATUS = Object.values(NotificationStatus);
 // Notification status END------
+
 // ------------ MODULE TYPE AND STATUS END ------------
