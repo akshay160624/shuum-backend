@@ -150,12 +150,13 @@ export const addCompany = async (req, res) => {
 export const companyList = async (req, res) => {
   try {
     const { search_text: searchText = "", status: statusRaw } = req.query;
+    const { user = null } = req;
 
     // make status as request format
     const status = statusRaw ? statusRaw.toUpperCase().trim() : "";
 
-    let filter = {};
-    if (!isEmpty(status)) {
+    const filter = {};
+    if (!isEmpty(status) && !isEmpty(user)) {
       const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
       if (!validCompanyStatus) {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
@@ -164,153 +165,172 @@ export const companyList = async (req, res) => {
     }
 
     if (searchText) {
-      filter = {
-        ...filter,
-        company_name: {
-          $regex: new RegExp(searchText.trim(), "i"),
-        },
+      filter.company_name = {
+        $regex: new RegExp(searchText.trim(), "i"),
       };
     }
 
-    const query = [
-      {
-        $match: filter,
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "company_id",
-          foreignField: "company_id",
-          as: "companyMembers",
+    let companyListQuery = [];
+    if (isEmpty(user)) {
+      // company list dropdown query
+      companyListQuery = [
+        {
+          $match: filter,
         },
-      },
-      {
-        $unwind: {
-          path: "$companyMembers",
-          preserveNullAndEmptyArrays: true, // Keep companies without members
+        {
+          $sort: { company_name: 1 },
         },
-      },
-      {
-        $sort: {
-          createdAt: -1,
+        {
+          $project: {
+            _id: 0,
+            company_id: 1,
+            company_name: 1,
+            status: 1,
+          },
         },
-      },
-      {
-        $group: {
-          _id: "$company_id",
-          company_id: {
-            $first: "$company_id",
+      ];
+    } else {
+      // company list all query
+      companyListQuery = [
+        {
+          $match: filter,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "company_id",
+            foreignField: "company_id",
+            as: "companyMembers",
           },
-          company_name: {
-            $first: "$company_name",
+        },
+        {
+          $unwind: {
+            path: "$companyMembers",
+            preserveNullAndEmptyArrays: true, // Keep companies without members
           },
-          email: {
-            $first: "$email",
-          },
-          phone: {
-            $first: "$phone",
-          },
-          website: {
-            $first: "$website",
-          },
-          established_year: {
-            $first: "$established_year",
-          },
-          founder: {
-            $first: "$founder",
-          },
-          postal_code: {
-            $first: "$postal_code",
-          },
-          headquarters: {
-            $first: "$headquarters",
-          },
-          industry: {
-            $first: "$industry",
-          },
-          key_services: {
-            $first: "$key_services",
-          },
-          focus_area: {
-            $first: "$focus_area",
-          },
-          description: {
-            $first: "$description",
-          },
-          industry: {
-            $first: "$industry",
-          },
-          company_image: {
-            $first: "$image_url",
-          },
-          status: {
-            $first: "$status",
-          },
-          members_count: {
-            $sum: {
-              $cond: {
-                if: {
-                  $ifNull: ["$companyMembers", false],
-                }, // Check if companyMembers exists and is not null
-                then: 1,
-                else: 0,
+        },
+        {
+          $group: {
+            _id: "$company_id",
+            company_id: {
+              $first: "$company_id",
+            },
+            company_name: {
+              $first: "$company_name",
+            },
+            email: {
+              $first: "$email",
+            },
+            phone: {
+              $first: "$phone",
+            },
+            website: {
+              $first: "$website",
+            },
+            established_year: {
+              $first: "$established_year",
+            },
+            founder: {
+              $first: "$founder",
+            },
+            postal_code: {
+              $first: "$postal_code",
+            },
+            headquarters: {
+              $first: "$headquarters",
+            },
+            industry: {
+              $first: "$industry",
+            },
+            key_services: {
+              $first: "$key_services",
+            },
+            focus_area: {
+              $first: "$focus_area",
+            },
+            description: {
+              $first: "$description",
+            },
+            industry: {
+              $first: "$industry",
+            },
+            company_image: {
+              $first: "$image_url",
+            },
+            status: {
+              $first: "$status",
+            },
+            members_count: {
+              $sum: {
+                $cond: {
+                  if: {
+                    $ifNull: ["$companyMembers", false],
+                  }, // Check if companyMembers exists and is not null
+                  then: 1,
+                  else: 0,
+                },
+              },
+            },
+            members: {
+              $push: {
+                $cond: [
+                  { $ifNull: ["$companyMembers.user_id", false] }, // Check if user_id exists
+                  {
+                    user_id: "$companyMembers.user_id",
+                    email: "$companyMembers.email",
+                    name: "$companyMembers.name",
+                    image: "$companyMembers.profile_url",
+                  },
+                  // Skip pushing null or invalid members
+                  null,
+                ],
               },
             },
           },
-          members: {
-            $push: {
-              $cond: [
-                { $ifNull: ["$companyMembers.user_id", false] }, // Check if user_id exists
-                {
-                  user_id: "$companyMembers.user_id",
-                  email: "$companyMembers.email",
-                  name: "$companyMembers.name",
-                  image: "$companyMembers.profile_url",
-                },
-                // Skip pushing null or invalid members
-                null,
-              ],
+        },
+        {
+          $addFields: {
+            members: {
+              $filter: {
+                input: "$members",
+                as: "member",
+                cond: { $ne: ["$$member", null] }, // Remove null values
+              },
             },
           },
         },
-      },
-      {
-        $addFields: {
-          members: {
-            $filter: {
-              input: "$members",
-              as: "member",
-              cond: { $ne: ["$$member", null] }, // Remove null values
-            },
+        {
+          $sort: {
+            createdAt: -1,
           },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          company_id: 1,
-          company_name: 1,
-          email: 1,
-          phone: 1,
-          website: 1,
-          established_year: 1,
-          founder: 1,
-          postal_code: 1,
-          headquarters: 1,
-          industry: 1,
-          key_services: 1,
-          focus_area: 1,
-          description: 1,
-          company_image: 1,
-          status: 1,
-          members_count: 1,
-          members: 1,
+        {
+          $project: {
+            _id: 0,
+            company_id: 1,
+            company_name: 1,
+            email: 1,
+            phone: 1,
+            website: 1,
+            established_year: 1,
+            founder: 1,
+            postal_code: 1,
+            headquarters: 1,
+            industry: 1,
+            key_services: 1,
+            focus_area: 1,
+            description: 1,
+            company_image: 1,
+            status: 1,
+            members_count: 1,
+            members: 1,
+          },
         },
-      },
-    ];
+      ];
+    }
 
     // fetch company list
-    const companyList = await aggregateFromDb(COMPANY_TABLE, query);
+    const companyList = await aggregateFromDb(COMPANY_TABLE, companyListQuery);
     if (!isEmpty(companyList)) {
       return responseHelper.success(res, "Company list fetched successfully", SUCCESS, companyList);
     } else {
