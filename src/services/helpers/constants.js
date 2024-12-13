@@ -133,6 +133,7 @@ export const IntroductionStatus = {
   DENIED: "DENIED",
   COMPLETED: "COMPLETED",
   MATCHED: "MATCHED",
+  SUGGESTED: "SUGGESTED",
 };
 export const INTRODUCTION_STATUS = Object.values(IntroductionStatus);
 
