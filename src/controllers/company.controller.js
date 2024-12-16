@@ -156,7 +156,7 @@ export const companyList = async (req, res) => {
     const status = statusRaw ? statusRaw.toUpperCase().trim() : "";
 
     const filter = {};
-    if (!isEmpty(status) && !isEmpty(user)) {
+    if (!isEmpty(status)) {
       const validCompanyStatus = findOptionByValue(COMPANY_STATUS, status);
       if (!validCompanyStatus) {
         return responseHelper.error(res, "Invalid status value", BAD_REQUEST);
