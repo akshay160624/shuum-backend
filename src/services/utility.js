@@ -228,3 +228,18 @@ export function validateLinkedinUrl(url) {
   // Return the formatted URL
   return { url, message };
 }
+
+// Helper function to determine the S3 folder name
+export function getS3BucketFolderName(folderBaseName) {
+  const environmentRaw = process.env.ENVIRONMENT_NAME || "LOCAL";
+  const environment = environmentRaw.toUpperCase().trim();
+
+  switch (environment) {
+    case "PROD":
+      return folderBaseName;
+    case "DEV":
+      return `dev/${folderBaseName}`;
+    default:
+      return `test/${folderBaseName}`;
+  }
+}

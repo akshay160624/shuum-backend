@@ -535,16 +535,19 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// users list for individuals
+// users list for individuals dropdown
 export const usersList = async (req, res) => {
   try {
     const { search_text: searchText = "" } = req.query;
-    const { user } = req;
+    const { user = null } = req;
 
     let filter = {
       email_verified: true,
       signup_completed: true,
     };
+
+    // Exclude the requesting user's record from the list to ensure the user does not see their own record.
+    if (!isEmpty(user)) filter.user_id = { $nin: [user.user_id] };
 
     // Define the second $match stage for the dynamic search filter
     const searchMatch = searchText.trim()
@@ -557,7 +560,6 @@ export const usersList = async (req, res) => {
         }
       : null;
 
-    // TODO: remove requested users data from result if 3 person flow
     // list query
     const usersListQuery = [
       {

@@ -10,7 +10,6 @@ import { fetchCompany } from "../services/db.services.js";
 import { INVALID_REQUEST, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import csv from "csvtojson";
 import axios from "axios";
-import { deleteCache, getCache, hasCache, setCache } from "../services/helpers/cache.js";
 import { findOptionByValue, validateEmail, validateEstablishedYear, validatePhoneNumber, validatePostalCode, validateWebsiteURL } from "../services/utility.js";
 import { deleteFileFromS3 } from "../middleware/image-upload.js";
 const { isEmpty } = lodash;
@@ -134,7 +133,6 @@ export const addCompany = async (req, res) => {
     // insert into the database
     const companySaved = await insertOneToDb(COMPANY_TABLE, companyDetails);
     if (!isEmpty(companySaved)) {
-      deleteCache("companies"); // delete company list cache
       const responseData = {
         company_id: companyDetails?.company_id,
       };

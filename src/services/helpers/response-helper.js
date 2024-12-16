@@ -8,7 +8,9 @@ export const success = async (res, message, statusCode = 200, data = null, extra
   if (data) {
     response.data = data;
   }
-
+  if (extras && typeof extras === "object") {
+    response = { ...response, ...extras };
+  }
   return res.status(statusCode).json(response);
 };
 

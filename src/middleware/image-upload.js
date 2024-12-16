@@ -4,7 +4,7 @@ import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST } from "../services/helpers/status-code.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
 import { S3Client } from "@aws-sdk/client-s3";
-import { companyS3BucketFolderName } from "../services/helpers/constants.js";
+import { companyS3BucketFolderName, userProfileS3BucketFolderName } from "../services/helpers/constants.js";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
@@ -56,7 +56,7 @@ export const uploadUserProfileS3Image = multer({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
     destination: (req, file, cb) => {
-      const folderName = "user-profile";
+      const folderName = userProfileS3BucketFolderName;
       cb(null, folderName);
     },
     contentType: multerS3.AUTO_CONTENT_TYPE,
@@ -65,7 +65,7 @@ export const uploadUserProfileS3Image = multer({
     },
 
     key: function (req, file, cb) {
-      const folderName = "user-profile";
+      const folderName = userProfileS3BucketFolderName;
       // if (!foldername) {
       //   return cb(new Error("Please provide a bucket folder name"));
       // }

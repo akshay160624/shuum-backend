@@ -1,3 +1,5 @@
+import { getS3BucketFolderName } from "../utility.js";
+
 // db table common status's
 export const ACTIVE = "ACTIVE";
 export const INACTIVE = "INACTIVE";
@@ -11,8 +13,10 @@ export const timestamp = {
 };
 
 // ------------S3 bucket folder names START------------
-export const companyS3BucketFolderName = "company";
-export const companyExcelFileS3BucketFolderName = "company-excel";
+export const companyS3BucketFolderName = getS3BucketFolderName("company");
+export const companyExcelFileS3BucketFolderName = getS3BucketFolderName("company-excel");
+export const userProfileS3BucketFolderName = getS3BucketFolderName("user-profile");
+
 // ------------S3 bucket folder names END------------
 
 // ------------DROPDOWNS START------------
