@@ -9,9 +9,32 @@ import {
 import * as responseHelper from "../services/helpers/response-helper.js";
 import { BAD_REQUEST, CONFLICT, ERROR, NOT_FOUND, SUCCESS } from "../services/helpers/status-code.js";
 import { COMPANY_TABLE, INTRODUCTION_TABLE, INVITES_TABLE, USER_TABLE } from "../services/helpers/db-tables.js";
-import { CLAIMED, INACTIVE, IntroductionStatus, PROFILE_KEYWORDS_OPTIONS, timestamp, UNCLAIMED, InvitationStatus, LOOKING_FOR_OPTIONS, ROLE_OPTIONS } from "../services/helpers/constants.js";
+import {
+  CLAIMED,
+  INACTIVE,
+  IntroductionStatus,
+  PROFILE_KEYWORDS_OPTIONS,
+  timestamp,
+  UNCLAIMED,
+  InvitationStatus,
+  LOOKING_FOR_OPTIONS,
+  ROLE_OPTIONS,
+  INDUSTRY_TAGS_OPTIONS,
+  ASKS_OPTIONS,
+  GIVES_OPTIONS,
+} from "../services/helpers/constants.js";
 import { aggregateFromDb, fetchAllFromDb, fetchOneFromDb, insertOneToDb, updateOneToDb } from "../services/mongodb.js";
-import { comparePasswords, createJwtToken, encryptPasswordToHash, findOptionByValue, generateOtpWithExpiry, sendEmail, validateLinkedinUrl, validateOTP } from "../services/utility.js";
+import {
+  comparePasswords,
+  createJwtToken,
+  encryptPasswordToHash,
+  findOptionByValue,
+  generateOtpWithExpiry,
+  sendEmail,
+  validateLinkedinUrl,
+  validateOptionValues,
+  validateOTP,
+} from "../services/utility.js";
 import ejs from "ejs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -28,6 +51,7 @@ const { isEmpty } = lodash;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// -----Auth APIs start-----
 // get-otp for register
 export const register = async (req, res) => {
   try {
@@ -283,7 +307,9 @@ export const passwordLogin = async (req, res) => {
     return responseHelper.error(res, err.message, ERROR);
   }
 };
+// -----Auth APIs end-----
 
+// -----Users APIs start-----
 export const updateUserInfo = async (req, res) => {
   try {
     const { user = null } = req; // get user details from auth token
@@ -351,14 +377,15 @@ export const updateUserProfile = async (req, res) => {
     }
 
     // Validate request
-    const isNotValid = await updateProfileRequestValidate(req.body);
-    if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
+    // const isNotValid = await updateProfileRequestValidate(req.body);
+    // if (isNotValid) return responseHelper.error(res, isNotValid.message, BAD_REQUEST);
 
     const { user } = req;
     const {
       company_id: companyId = "",
       first_name: firstName = "",
       last_name: lastName = "",
+      location = "",
       role = "",
       about_me: aboutMe = "",
       looking_for: lookingFor = "",
@@ -367,6 +394,10 @@ export const updateUserProfile = async (req, res) => {
       organization = "",
       linkedin_url: linkedinUrl = "",
       socials = [],
+      industry_tags: industryTags = [],
+      bio = "",
+      asks = [],
+      gives = [],
       onboarding_steps: onboardingSteps = "",
     } = req.body;
 
@@ -379,14 +410,20 @@ export const updateUserProfile = async (req, res) => {
     //   }
     // }
 
-    // check company exist in db
-    const companyExist = await fetchCompany({ company_id: companyId });
-    if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
-
-    const { location, originalname, filename: fileName } = req.file;
-
-    const profileData = { company_id: companyId };
+    const profileData = {};
     profileData.profile_details = user.profile_details;
+
+    let companyExist = "";
+    // check company exist in db
+    if (!isEmpty(companyId)) {
+      companyExist = await fetchCompany({ company_id: companyId });
+      if (isEmpty(companyExist)) return responseHelper.error(res, `Company does not exists!`, NOT_FOUND);
+      profileData.company_id = companyId;
+    }
+
+    const { location: profileUrl = "", originalname, filename: fileName = "" } = req.file;
+
+    // role available then validate
     if (!isEmpty(role)) {
       const roleOption = findOptionByValue(ROLE_OPTIONS, role);
       if (!roleOption) {
@@ -408,7 +445,7 @@ export const updateUserProfile = async (req, res) => {
       }
 
       profileData.profile_details.looking_for = lookingForOption;
-      profileData.profile_details.other_looking_for = lookingForOption === "OTHER" ? otherLookingFor || "" : "";
+      profileData.profile_details.other_looking_for = lookingForOption === "OTHER" ? otherLookingFor : "";
     }
     if (!isEmpty(organization)) profileData.profile_details.organization = organization.toUpperCase().trim();
     if (!isEmpty(linkedinUrl)) {
@@ -419,9 +456,42 @@ export const updateUserProfile = async (req, res) => {
       profileData.profile_details.linkedin_url = url;
     }
 
-    if (firstName) profileData.first_name = firstName;
-    if (lastName) profileData.last_name = lastName;
-    if (onboardingSteps) profileData.onboarding_steps = onboardingSteps;
+    if (firstName) profileData.first_name = firstName.trim();
+    if (lastName) profileData.last_name = lastName.trim();
+    if (location) profileData.location = location.trim();
+
+    if (!isEmpty(industryTags)) {
+      const { message, dataArrayUppercase: industryData } = validateOptionValues(INDUSTRY_TAGS_OPTIONS, industryTags, "industry_tags");
+      if (message) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+      profileData.industry_tags = industryData;
+    }
+
+    if (!isEmpty(bio)) {
+      if (bio.length > 1000) {
+        return responseHelper.error(res, "Bio must not exceed 1000 characters", BAD_REQUEST);
+      }
+      profileData.bio = bio;
+    }
+
+    if (!isEmpty(asks)) {
+      const { message, dataArrayUppercase: asksData } = validateOptionValues(ASKS_OPTIONS, asks, "asks");
+      if (message) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+      profileData.asks = asksData;
+    }
+
+    if (!isEmpty(gives)) {
+      const { message, dataArrayUppercase: givesData } = validateOptionValues(GIVES_OPTIONS, gives, "gives");
+      if (message) {
+        return responseHelper.error(res, message, BAD_REQUEST);
+      }
+      profileData.gives = givesData;
+    }
+
+    if (onboardingSteps || onboardingSteps === false) profileData.onboarding_steps = onboardingSteps;
 
     if (!isEmpty(profileKeywords)) {
       if (Array.isArray(profileKeywords) && profileKeywords.every((item) => typeof item === "string")) {
@@ -440,8 +510,8 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
-    if (location) {
-      profileData.profile_url = location;
+    if (profileUrl) {
+      profileData.profile_url = profileUrl;
       profileData.profile_image_name = fileName;
     }
 
@@ -458,7 +528,7 @@ export const updateUserProfile = async (req, res) => {
     const profileSaved = await updateOneToDb(USER_TABLE, { user_id: user.user_id }, profileData);
     if (!isEmpty(profileSaved)) {
       // if user choose company then update company status with "CLAIMED
-      if (companyExist.status === UNCLAIMED) {
+      if (companyExist && companyExist.status === UNCLAIMED) {
         const updateStatusData = {
           status: CLAIMED,
           updatedAt: new Date(),
@@ -482,10 +552,8 @@ export const getOnboardingSteps = async (req, res) => {
     // Validate the user object
     if (isEmpty(user)) return responseHelper.error(res, "Invalid request", BAD_REQUEST);
 
-    // Fetch the user data
+    // Validate user
     const userExist = await getUser({ user_id: user?.user_id });
-
-    // Check if user exists
     if (isEmpty(userExist)) return responseHelper.error(res, "User does not exist.", NOT_FOUND);
 
     const responseData = {
@@ -590,6 +658,7 @@ export const usersList = async (req, res) => {
     return responseHelper.error(res, err.message, ERROR);
   }
 };
+
 export const sendInvite = async (req, res) => {
   try {
     // Validate request
@@ -633,3 +702,4 @@ export const sendInvite = async (req, res) => {
     return responseHelper.error(res, err.message, ERROR);
   }
 };
+// -----Users APIs end-----

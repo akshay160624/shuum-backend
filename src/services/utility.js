@@ -243,3 +243,25 @@ export function getS3BucketFolderName(folderBaseName) {
       return `test/${folderBaseName}`;
   }
 }
+
+// Validate array of strings options
+export const validateOptionValues = (options = [], dataArray = [], keyname = "") => {
+  if (!Array.isArray(dataArray) || !dataArray.every((item) => typeof item === "string")) {
+    return { message: `${keyname} must be an array of strings` };
+  }
+
+  // Check if all keywords exist in options
+  if (!dataArray.every((keyword) => findOptionByValue(options, keyword))) {
+    return { message: `Invalid ${keyname} value` };
+  }
+
+  // Check for case-insensitive duplicates
+  const normalizedDataArray = dataArray.map((keyword) => keyword.toLowerCase());
+  if (new Set(normalizedDataArray).size !== normalizedDataArray.length) {
+    return { message: `${keyname} duplicate values are not allowed` };
+  }
+
+  // Convert all keywords to uppercase for storage
+  const dataArrayUppercase = dataArray.map((keyword) => keyword.toUpperCase());
+  return { message: "", dataArrayUppercase };
+};

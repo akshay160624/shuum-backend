@@ -120,6 +120,20 @@ export const LOOKING_FOR_OPTIONS = [
   { value: "SERVICE_PARTNERS", label: "Service Partners" },
   { value: "OTHER", label: "Other" },
 ];
+
+// User profile "Industry tags" options
+export const INDUSTRY_TAGS_OPTIONS = [
+  { value: "GREEN_HYDROGEN", label: "Green Hydrogen" },
+  { value: "RENEWABLE_ENERGY", label: "Renewable Energy" },
+  { value: "INDUSTRIAL_SUSTAINABILITY", label: "Industrial Sustainability" },
+];
+
+// User profile "Asks" options
+export const ASKS_OPTIONS = [{ value: "STRATEGIC_INTRODUCTION", label: "Strategic Introduction" }];
+
+// User profile "Gives" options
+export const GIVES_OPTIONS = [{ value: "INNOVATIVE_SOLUTION", label: "Innovative Solution" }];
+
 // ------------DROPDOWNS END------------
 
 // ------------ MODULE TYPE AND STATUS START ------------
