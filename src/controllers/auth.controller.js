@@ -583,12 +583,15 @@ export const getProfile = async (req, res) => {
     // Fetch related company and introductions data
     const [companyExist, usersIntroductions] = await Promise.all([fetchCompany({ company_id: userExist?.company_id }), fetchAllFromDb(INTRODUCTION_TABLE, { user_id: userId, status: COMPLETED })]);
 
-    const firstName = userExist?.first_name || userExist?.name || "";
+    const firstName = userExist?.first_name || "";
+    const lastName = userExist?.last_name || "";
+    const fullName = firstName && lastName ? `${firstName} ${lastName}` : firstName;
+
     // Construct the response data
     const responseData = {
       first_name: firstName,
-      last_name: userExist?.last_name || "",
-      full_name: userExist?.last_name ? `${firstName} ${userExist?.last_name}` : firstName,
+      last_name: lastName,
+      full_name: fullName,
       profile_url: userExist?.profile_url || "",
       location: userExist?.location || "",
       role: userExist?.profile_details?.role || "",
