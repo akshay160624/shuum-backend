@@ -583,17 +583,25 @@ export const getProfile = async (req, res) => {
     // Fetch related company and introductions data
     const [companyExist, usersIntroductions] = await Promise.all([fetchCompany({ company_id: userExist?.company_id }), fetchAllFromDb(INTRODUCTION_TABLE, { user_id: userId, status: COMPLETED })]);
 
+    const firstName = userExist?.first_name || userExist?.name || "";
     // Construct the response data
     const responseData = {
-      first_name: userExist?.first_name || userExist?.name || "",
+      first_name: firstName,
       last_name: userExist?.last_name || "",
+      full_name: userExist?.last_name ? `${firstName} ${userExist?.last_name}` : firstName,
       profile_url: userExist?.profile_url || "",
-      address: "", //TODO: Add address field
+      location: userExist?.location || "",
       role: userExist?.profile_details?.role || "",
+      linkedin_url: userExist?.profile_details?.linkedin_url || "",
       company_name: companyExist?.company_name || "",
       introduction_completed: usersIntroductions?.length || 0,
       pursuit_completed: 0, //TODO: Add pursuit query data
       active_partners: 0, //TODO: Add active partners query data
+      onboarding_steps: userExist?.onboarding_steps || "",
+      industry_tags: userExist?.industry_tags || [],
+      bio: userExist?.bio || "",
+      asks: userExist?.asks || [],
+      gives: userExist?.gives || [],
     };
     return responseHelper.success(res, "User profile fetched successfully", SUCCESS, responseData);
   } catch (err) {
