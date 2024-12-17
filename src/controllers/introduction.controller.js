@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { INTRODUCTION_TABLE } from "../services/helpers/db-tables.js";
 import { SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany, fetchIntroduction, fetchUser } from "../services/db.services.js";
+import { fetchCompany, fetchIntroduction, getUser } from "../services/db.services.js";
 const { isEmpty, pick, isEqual } = lodash;
 const INTRODUCTION_FILTERS = ["INDIVIDUAL", "COMPANY"];
 const { REQUESTED, RECEIVED } = IntroductionStatus;
@@ -41,7 +41,7 @@ export const requestIntroduction = async (req, res) => {
     }
 
     if (introductionType === TARGET && targetType === INDIVIDUAL) {
-      const userExists = await fetchUser({ user_id: individual_id });
+      const userExists = await getUser({ user_id: individual_id });
       if (isEmpty(userExists)) return responseHelper.error(res, `Individual user does not exists!`, NOT_FOUND);
     }
 

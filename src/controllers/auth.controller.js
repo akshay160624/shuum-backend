@@ -18,7 +18,7 @@ import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import lodash from "lodash";
 import { EMAIL_SENT, SOMETHING_WENT_WRONG } from "../services/helpers/response-message.js";
-import { fetchCompany, fetchUser, updateAuthUser } from "../services/db.services.js";
+import { fetchCompany, getUser, updateAuthUser } from "../services/db.services.js";
 import { registerAuthUser } from "../services/db.services.js";
 import { getGoogleUserInfo } from "../services/google-auth.services.js";
 const { COMPLETED } = IntroductionStatus;
@@ -38,7 +38,7 @@ export const register = async (req, res) => {
         const googleUser = await getGoogleUserInfo(code.trim());
         if (!isEmpty(googleUser)) {
           const { email } = googleUser;
-          const userExist = await fetchUser({ email: email.toLowerCase().trim() });
+          const userExist = await getUser({ email: email.toLowerCase().trim() });
           if (isEmpty(userExist)) {
             // register user if not registered
             const registeredUser = await registerAuthUser(email);
@@ -230,7 +230,7 @@ export const passwordLogin = async (req, res) => {
         const googleUser = await getGoogleUserInfo(code.trim());
         if (!isEmpty(googleUser)) {
           const { email } = googleUser;
-          const userExist = await fetchUser({ email: email.toLowerCase().trim() });
+          const userExist = await getUser({ email: email.toLowerCase().trim() });
           if (!isEmpty(userExist)) {
             // generate token if user exist
             const responseData = {
@@ -483,7 +483,7 @@ export const getOnboardingSteps = async (req, res) => {
     if (isEmpty(user)) return responseHelper.error(res, "Invalid request", BAD_REQUEST);
 
     // Fetch the user data
-    const userExist = await fetchUser({ user_id: user?.user_id });
+    const userExist = await getUser({ user_id: user?.user_id });
 
     // Check if user exists
     if (isEmpty(userExist)) return responseHelper.error(res, "User does not exist.", NOT_FOUND);
@@ -505,7 +505,7 @@ export const getProfile = async (req, res) => {
     const userId = user?.user_id || "";
 
     // Fetch the user data
-    const userExist = await fetchUser({ user_id: userId });
+    const userExist = await getUser({ user_id: userId });
 
     // Check if user exists
     if (isEmpty(userExist)) {
@@ -601,7 +601,7 @@ export const sendInvite = async (req, res) => {
     const email = rawEmail.toLowerCase().trim();
 
     // Check if user already exists
-    const userExist = await fetchUser({ email });
+    const userExist = await getUser({ email });
     if (!isEmpty(userExist)) {
       return responseHelper.error(res, "User already exists. Invite not sent.", CONFLICT);
     }

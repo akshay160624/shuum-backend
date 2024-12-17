@@ -3,7 +3,7 @@ import * as responseHelper from "../services/helpers/response-helper.js";
 import { INVALID_TOKEN, TOKEN_NOTFOUND, USER_NOTFOUND } from "../services/helpers/response-message.js";
 import { NOT_FOUND, UNAUTHORIZED } from "../services/helpers/status-code.js";
 import lodash from "lodash";
-import { fetchUser } from "../services/db.services.js";
+import { getUser } from "../services/db.services.js";
 const { isEmpty } = lodash;
 
 // JWT middleware
@@ -23,7 +23,7 @@ export const verifyUserAuthToken = async (req, res, next) => {
     }
 
     // Fetch the user from the database
-    const userInDb = await fetchUser({ user_id: decoded.tokenObject.user_id });
+    const userInDb = await getUser({ user_id: decoded.tokenObject.user_id });
     if (isEmpty(userInDb)) {
       return responseHelper.error(res, USER_NOTFOUND, NOT_FOUND);
     }
@@ -54,7 +54,7 @@ export const verifyAuthPublicOrPrivate = async (req, res, next) => {
     }
 
     // Fetch the user from the database
-    const userInDb = await fetchUser({ user_id: decoded.tokenObject.user_id });
+    const userInDb = await getUser({ user_id: decoded.tokenObject.user_id });
     if (isEmpty(userInDb)) {
       return responseHelper.error(res, USER_NOTFOUND, NOT_FOUND);
     }

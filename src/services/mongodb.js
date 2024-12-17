@@ -99,7 +99,7 @@ export const insertManyToDb = async (collectionName = "", data = []) => {
   }
 };
 
-export const deleteOneFromDb = async (collectionName = '', filter = {}) => {
+export const deleteOneFromDb = async (collectionName = "", filter = {}) => {
   try {
     if (!connection) {
       await getMongodbClient();
